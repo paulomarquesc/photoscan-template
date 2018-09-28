@@ -1,0 +1,120 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "apiVersion": {
+      "type": "string",
+      "defaultValue": "2017-03-01"
+    },
+    "deploymentUniqueString": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string"
+    },
+    "gatewaySubnetId": {
+      "type": "string"
+    },
+    "gatewayName": {
+      "type": "string"
+    },
+    "gatewayPublicIpId": {
+      "type": "string"
+    },
+    "vpnType": {
+      "type": "string",
+      "allowedValues": [
+        "RouteBased",
+        "PolicyBased"
+      ],
+      "defaultValue": "RouteBased"
+    },
+    "enableBGP": {
+      "type": "bool",
+      "defaultValue": false
+    },
+    "bgpAsn": {
+      "type": "int",
+      "defaultValue": 10000
+    },
+    "bgpPeeringAddress": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "bgpPeerWeight": {
+      "type": "int",
+      "defaultValue": 100
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {}
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+      "condition": "[not(parameters('enableBGP'))]",
+      "name": "[if(not(parameters('enableBGP')),parameters('gatewayName'),'ignore1')]",
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('apiVersion')]",
+      "tags": "[if(equals(parameters('tags'),json('null')),json('null'),parameters('tags'))]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "vnetGatewayConfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('gatewaySubnetId')]"
+              },
+              "publicIPAddress": {
+                "id": "[parameters('gatewayPublicIpId')]"
+              }
+            }
+          }
+        ],
+        "gatewayType": "Vpn",
+        "vpnType": "[parameters('vpnType')]",
+        "enableBgp": false
+      }
+    },
+    {
+      "condition": "[and(parameters('enableBGP'),equals(parameters('vpnType'),'RouteBased'))]",
+      "name": "[if(and(parameters('enableBGP'),equals(parameters('vpnType'),'RouteBased')),parameters('gatewayName'),'ignore2')]",
+      "type": "Microsoft.Network/virtualNetworkGateways",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('apiVersion')]",
+      "tags": "[if(equals(parameters('tags'),json('null')),json('null'),parameters('tags'))]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "vnetGatewayConfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[parameters('gatewaySubnetId')]"
+              },
+              "publicIPAddress": {
+                "id": "[parameters('gatewayPublicIpId')]"
+              }
+            }
+          }
+        ],
+        "gatewayType": "Vpn",
+        "vpnType": "[parameters('vpnType')]",
+        "enableBgp": true,
+        "bgpSettings": {
+          "asn": "[parameters('bgpAsn')]",
+          "bgpPeeringAddress": "[parameters('bgpPeeringAddress')]",
+          "peerWeight": "[parameters('bgpPeerWeight')]"
+        }
+
+      }
+    }
+  ],
+  "outputs": {
+  }
+}

@@ -1,0 +1,229 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "nicApiVersion": {
+      "type": "string",
+      "defaultValue": "2017-06-01"
+    },
+    "deploymentApiVersion": {
+      "type": "string",
+      "defaultValue": "2017-05-10"
+    },
+    "publicIpApiVersion": {
+      "type": "string",
+      "defaultValue": "2017-05-10"
+    },
+    "deploymentUniqueString": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string"
+    },
+    "nicName": {
+      "type": "string"
+    },
+    "subnetId": {
+      "type": "string"
+    },
+    "includeVmInLoadBalancerBe": {
+      "type": "string",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "defaultValue": "no"
+    },
+    "assignVmsToLoadBalancerNatRule": {
+      "type": "string",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "defaultValue": "no"
+    },
+    "loadBalancerBackEndAddressPoolId": {
+      "type": "string",
+      "defaultValue": "none"
+    },
+    "loadBalancerNatRuleId": {
+      "type": "string",
+      "defaultValue": "none"
+    },
+    "includeVmInAppGwBe": {
+      "type": "string",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "defaultValue": "no"
+    },
+    "AppGwBackEndAddressPoolId": {
+      "type": "string",
+      "defaultValue": "none"
+    },
+    "usePublicIpAddress": {
+      "type": "string",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "defaultValue": "no"
+    },
+    "publicIpAddressType": {
+      "type": "string",
+      "allowedValues": [
+        "Static",
+        "Dynamic"
+      ],
+      "defaultValue": "Dynamic"
+    },
+    "privateIpAddressType": {
+      "type": "string",
+      "allowedValues": [
+        "Static",
+        "Dynamic"
+      ],
+      "defaultValue": "Dynamic"
+    },
+    "privateIpAddress": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "configureDnsServers": {
+      "type": "string",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "defaultValue": "no"
+    },
+    "dnsServers": {
+      "type": "array",
+      "defaultValue": [
+        ""
+      ]
+    },
+    "attachNsg": {
+      "type": "string",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "defaultValue": "no"
+    },
+    "nsgId": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "sasToken": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "enableIPForwarding": {
+      "type": "bool",
+      "defaultValue": false
+    },
+    "enableAcceleratedNetworking": {
+      "type":"bool",
+      "defaultValue": false
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {}
+    }
+  },
+  "variables": {
+    "publicIpAddressBuildingBlockUrl": "[uri(deployment().properties.templateLink.uri, concat('publicIp.json',parameters('sasToken')))]",
+    "publicIPAddressId": {
+      "id": "[resourceId('Microsoft.Network/publicIpAddresses',concat(parameters('nicName'),'-PIP'))]"
+    },
+    "loadBalancerBackEndAddressPoolId": [
+      {
+        "id": "[parameters('loadBalancerBackEndAddressPoolId')]"
+      }
+    ],
+    "loadBalancerNatRuleId": [
+      {
+        "id": "[parameters('loadBalancerNatRuleId')]"
+      }
+    ],
+    "applicationGatewayBackendAddressPools": [
+      {
+        "id": "[parameters('AppGwBackEndAddressPoolId')]"
+      }
+    ],
+    "nsgId": {
+      "id": "[parameters('nsgId')]"
+    }
+  },
+  "resources": [
+    {
+      "comments": "PublicIP Addresses",
+      "condition": "[equals(parameters('usePublicIpAddress'),'yes')]",
+      "name": "[concat(parameters('deploymentUniqueString'),'-pipFromNic-',parameters('nicName'))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[parameters('deploymentApiVersion')]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('publicIpAddressBuildingBlockUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "tags": {
+            "value": "[parameters('tags')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "apiVersion": {
+            "value": "[parameters('publicIpApiVersion')]"
+          },
+          "publicIpAddressType": {
+            "value": "[parameters('publicIpAddressType')]"
+          },
+          "publicIpAddressName": {
+            "value": "[concat(parameters('nicName'),'-PIP')]"
+          }
+        }
+      }
+    },
+    {
+      "comments": "Network Interface",
+      "name": "[parameters('nicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-pipFromNic-',parameters('nicName'))]"
+      ],
+      "tags": "[if(equals(parameters('tags'),json('null')),json('null'),parameters('tags'))]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "publicIPAddress": "[if(equals(parameters('usePublicIpAddress'),'yes'),variables('publicIPAddressId'),json('null'))]",
+              "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+              "privateIPAddress": "[if(equals(parameters('privateIpAddressType'),'Static'),parameters('privateIpAddress'),json('null'))]",
+              "subnet": {
+                "id": "[parameters('subnetId')]"
+              },
+              "loadBalancerBackendAddressPools": "[if(equals(parameters('includeVmInLoadBalancerBe'),'yes'),variables('loadBalancerBackEndAddressPoolId'),json('null'))]",
+              "loadBalancerInboundNatRules": "[if(equals(parameters('assignVmsToLoadBalancerNatRule'),'yes'),variables('loadBalancerNatRuleId'),json('null'))]",
+              "applicationGatewayBackendAddressPools": "[if(equals(parameters('includeVmInAppGwBe'),'yes'),variables('applicationGatewayBackendAddressPools'),json('null'))]"
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": "[if(equals(parameters('configureDnsServers'),'yes'),parameters('dnsServers'),json('null'))]"
+        },
+        "enableAcceleratedNetworking": "[parameters('enableAcceleratedNetworking')]",
+        "enableIPForwarding": "[parameters('enableIPForwarding')]",
+        "networkSecurityGroup": "[if(equals(parameters('attachNsg'),'yes'),variables('nsgId'),json('null'))]"
+      }
+    }
+  ]
+}

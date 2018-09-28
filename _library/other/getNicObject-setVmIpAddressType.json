@@ -1,0 +1,93 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "deploymentUniqueString": {
+      "type": "string"
+    },
+    "sasToken": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "networkInterfaceId": {
+      "type": "string"
+    },
+    "privateIpAddressType": {
+      "type": "string",
+      "allowedValues": [
+        "Static",
+        "Dynamic"
+      ],
+      "defaultValue": "Static"
+    }
+  },
+  "variables": {
+    "updateIPAddressTypeTemplateName": "networkInterfaceIpAddrTypeOnly.json",
+    "updateIPAddressTypeBuildingBlockUrl": "[uri(replace(deployment().properties.templateLink.uri,'other','Microsoft.Network'), concat(variables('updateIPAddressTypeTemplateName'),parameters('sasToken')))]",
+    "getRefTemplateName": "getReference.json",
+    "getRefSuffix": "getNicRef",
+    "getRefUrl": "[uri(replace(deployment().properties.templateLink.uri,'Microsoft.Network','other'), concat(variables('getRefTemplateName'),parameters('sasToken')))]",
+    "nicApiVersion": "2017-06-01"
+  },
+  "resources": [
+    {
+      "comments": "Getting reference for the NIC",
+      "name": "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2017-05-10",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('getRefUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "deploymentUniqueString": {
+            "value": "[parameters('deploymentUniqueString')]"
+          },
+          "sasToken": {
+            "value": "[parameters('sasToken')]"
+          },
+          "resourceId": {
+            "value": "[parameters('networkInterfaceId')]"
+          },
+          "apiVersion": {
+            "value": "[variables('nicApiVersion')]"
+          }
+        }
+      }
+    },
+    {
+      "comments": "Updates a VM network interface IpConfig1 to related Private IP Address Type",
+      "name": "[concat(parameters('deploymentUniqueString'),'-GetNic-SetVmIpAddrType')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2017-05-10",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('updateIPAddressTypeBuildingBlockUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "deploymentUniqueString": {
+            "value": "[parameters('deploymentUniqueString')]"
+          },
+          "privateIpAddressType": {
+            "value": "[parameters('privateIpAddressType')]"
+          },
+          "networkInterface": {
+            "value": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix')),variables('nicApiVersion')).outputs.fullResourceObj.value]"
+          },
+          "sasToken": {
+            "value": "[parameters('sasToken')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+  }
+}

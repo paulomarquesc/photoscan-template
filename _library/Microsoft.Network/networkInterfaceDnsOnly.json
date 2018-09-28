@@ -1,0 +1,137 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "nicApiVersion": {
+      "type": "string",
+      "defaultValue": "2017-06-01"
+    },
+    "deploymentApiVersion": {
+      "type": "string",
+      "defaultValue": "2017-05-10"
+    },
+    "deploymentUniqueString": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string"
+    },
+    "networkInterfaceId": {
+      "type": "string"
+    },
+    "dnsServers": {
+      "type": "array"
+    },
+    "sasToken": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "nicOptionalAttributeSet": {
+      "type": "string",
+      "allowedValues": [
+        "all",
+        "none",
+        "nsg"
+      ],
+      "defaultValue": "nsg"
+    }
+  },
+  "variables": {
+    "nicName": "[split(parameters('networkInterfaceId'),'/')[8]]",
+    "getRefTemplateName": "getReference.json",
+    "getRefSuffix": "[concat('getNicRef',variables('nicName'))]",
+    "getRefUrl": "[uri(replace(deployment().properties.templateLink.uri,'Microsoft.Network','other'), concat(variables('getRefTemplateName'),parameters('sasToken')))]"
+  },
+  "resources": [
+    {
+      "comments": "Getting reference for the NIC",
+      "name": "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[parameters('deploymentApiVersion')]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('getRefUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "deploymentUniqueString": {
+            "value": "[parameters('deploymentUniqueString')]"
+          },
+          "sasToken": {
+            "value": "[parameters('sasToken')]"
+          },
+          "resourceId": {
+            "value": "[parameters('networkInterfaceId')]"
+          },
+          "apiVersion": {
+            "value": "[parameters('nicApiVersion')]"
+          }
+        }
+      }
+    },
+    {
+      "comments": "Network Interface - all optional items",
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'all')]",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'all'),variables('nicName'),'ignore1')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+       "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations]",
+        "dnsSettings": {
+          "dnsServers": "[parameters('dnsServers')]"
+        },
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "networkSecurityGroup": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.networkSecurityGroup]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]"
+      }
+    },
+    {
+      "comments": "Network Interface - with nsg",
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'nsg')]",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'nsg'),variables('nicName'),'ignore2')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations]",
+        "dnsSettings": {
+          "dnsServers": "[parameters('dnsServers')]"
+        },
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "networkSecurityGroup": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.networkSecurityGroup]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]"
+      }
+    },
+    {
+      "comments": "Network Interface - no nsg ",
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'none')]",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'none'),variables('nicName'),'ignore2')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations]",
+        "dnsSettings": {
+          "dnsServers": "[parameters('dnsServers')]"
+        },
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]"
+      }
+    }
+  ]
+}

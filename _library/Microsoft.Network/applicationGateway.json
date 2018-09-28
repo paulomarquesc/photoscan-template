@@ -1,0 +1,198 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "apiVersion": {
+      "type": "string",
+      "defaultValue": "2017-10-01"
+    },
+    "deploymentUniqueString": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string"
+    },
+    "appGwName": {
+      "type": "string"
+    },
+    "certificateName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the certificate used on all Application Gateways."
+      }
+    },
+    "certificatePassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Password used to decrypt the private key of the certificate used on all Application Gateways."
+      }
+    },
+    "base64EncryptedCertificate": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Encrypted Certificate with Private Key as Base64 string"
+      }
+    },
+    "sku": {
+      "type": "object"
+    },
+    "subnetId": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "privateIpAddress": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {}
+    }
+
+  },
+  "variables": {
+    "appGwID": "[resourceId('Microsoft.Network/applicationGateways/', parameters('appGwName'))]",
+    "appGwBackendAddressPoolId": "[concat(variables('appGwID'),'/backendAddressPools/appGatewayBackendPool')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/applicationGateways",
+      "name": "[parameters('appGwName')]",
+      "apiVersion": "[parameters('apiVersion')]",
+      "location": "[parameters('location')]",
+      "tags": "[if(equals(parameters('tags'),json('null')),json('null'),parameters('tags'))]",
+      "properties": {
+        "sku": "[parameters('sku')]",
+        "gatewayIPConfigurations": [
+          {
+            "name": "appGatewayIpConfig",
+            "properties": {
+              "subnet": {
+                "id": "[parameters('subnetId')]"
+              }
+            }
+          }
+        ],
+        "sslCertificates": [
+          {
+            "name": "[parameters('certificateName')]",
+            "properties": {
+              "data": "[parameters('base64EncryptedCertificate')]",
+              "password": "[parameters('certificatePassword')]"
+            }
+          }
+        ],
+        "frontendIPConfigurations": [
+          {
+            "name": "appGatewayFrontendIP",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIpAddress": "[parameters('privateIpAddress')]",
+              "subnet": {
+                "id": "[parameters('subnetId')]"
+              }
+            }
+          }
+        ],
+        "frontendPorts": [
+          {
+            "name": "appGatewayFrontendPort",
+            "properties": {
+              "port": 443
+            }
+          }
+        ],
+        "backendAddressPools": [
+          {
+            "name": "appGatewayBackendPool",
+            "properties": {
+              "backendAddresses": []
+            }
+          }
+        ],
+        "backendHttpSettingsCollection": [
+          {
+            "name": "appGatewayBackendHttpSettings",
+            "properties": {
+              "Port": 80,
+              "Protocol": "Http",
+              "CookieBasedAffinity": "Disabled"
+            }
+          },
+          {
+            "name": "appGatewayBackendHttpsSettings",
+            "properties": {
+              "port": 443,
+              "protocol": "Https",
+              "cookieBasedAffinity": "Enabled"
+            }
+          }
+        ],
+        "httpListeners": [
+          {
+            "name": "appGatewayHttpListener",
+            "properties": {
+              "FrontendIPConfiguration": {
+                "Id": "[concat(variables('appGwID'), '/frontendIPConfigurations/appGatewayFrontendIP')]"
+              },
+              "FrontendPort": {
+                "Id": "[concat(variables('appGwID'), '/frontendPorts/appGatewayFrontendPort')]"
+              },
+              "Protocol": "Https",
+              "SslCertificate": {
+                "Id": "[concat(variables('appGwId'), '/sslCertificates/', parameters('certificateName'))]"
+              }
+            }
+          }
+        ],
+        "urlPathMaps": [
+          {
+            "name": "urlPathMap01",
+            "properties": {
+              "defaultBackendAddressPool": {
+                "id": "[concat(variables('appGwID'), '/backendAddressPools/appGatewayBackendPool')]"
+              },
+              "defaultBackendHttpSettings": {
+                "id": "[concat(variables('appGwId'), '/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
+              },
+              "pathRules": [
+                {
+                  "name": "all",
+                  "properties": {
+                    "paths": [
+                      "/*"
+                    ],
+                    "backendAddressPool": {
+                      "id": "[concat(variables('appGwID'), '/backendAddressPools/appGatewayBackendPool')]"
+                    },
+                    "backendHttpSettings": {
+                      "id": "[concat(variables('appGwID'), '/backendHttpSettingsCollection/appGatewayBackendHttpSettings')]"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "requestRoutingRules": [
+          {
+            "name": "requestRoutingRule01",
+            "properties": {
+              "ruleType": "PathBasedRouting",
+              "httpListener": {
+                "id": "[concat(variables('appGwID'), '/httpListeners/appGatewayHttpListener')]"
+              },
+              "urlPathMap": {
+                "id": "[concat(variables('AppGwId'), '/urlPathMaps/urlPathMap01')]"
+              }
+            }
+          }
+        ],
+        "probes": [],
+        "redirectConfigurations": []
+      }
+    }
+  ],
+  "outputs": {}
+}

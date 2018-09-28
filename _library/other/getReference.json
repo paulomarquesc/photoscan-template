@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "deploymentUniqueString": {
+      "type": "string"
+    },
+    "sasToken": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "resourceId": {
+      "type": "string"
+    },
+    "apiVersion": {
+      "type": "string"
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+  ],
+  "outputs": {
+    "resourceObj": {
+      "type": "object",
+      "value": "[reference(parameters('resourceId'),parameters('apiVersion'))]"
+    },
+    "fullResourceObj": {
+      "type": "object",
+      "value": "[reference(parameters('resourceId'),parameters('apiVersion'),'Full')]"
+    }
+  }
+}

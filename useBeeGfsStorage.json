@@ -1,0 +1,231 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location where the resources of this template will be deployed to"
+      },
+      "defaultValue": "eastus"
+    },
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Photoscan Virtual Network name"
+      },
+      "defaultValue": "sofs-Vnet"
+    },
+    "vnetRG": {
+      "type": "string",
+      "metadata": {
+        "description": "Photoscan Vnet Resoure group name"
+      }
+    },
+    "nodeNameSuffix": {
+      "type": "string",
+      "defaultValue": "workernode",
+      "metadata": {
+        "description": "Name suffix to be used in the GPU Nodes."
+      }
+    },
+    "dnsDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS domain name use to build the host's FQDN."
+      }
+    },
+    "gpuNodesCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of GPU VM Nodes."
+      }
+    },
+    "beeGfsVnetRG": {
+      "type": "string",
+      "metadata": {
+        "description": "BeeGFS Vnet Resoure group name"
+      }
+    },
+    "beeGfsVnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "BeeGFS Virtual Network name"
+      }
+    },
+    "deploymentConfig": {
+      "type": "object",
+      "metadata": {
+        "description": "Object that contains library paths, api versions, SAS token, from master template."
+      }
+    },
+    "beeGfsMasterName": {
+      "type": "string",
+      "metadata": {
+        "description": "Object that contains library paths, api versions, SAS token, from master template."
+      }
+    },
+    "beeGfsMountPoint":{
+      "type": "string",
+      "metadata": {
+        "description": "Folder path where BeeGFS volume will be mounted"
+      }
+    },
+    "beegfsHpcUserHomeFolder": {
+      "type": "string",
+      "metadata": {
+        "description": "This indicates beegfs mount point on master and storage+meta nodes for the hpcuser home folder, mounted on all nodes."
+      }
+    },
+    "hpcUser": {
+      "type": "string",
+      "metadata": {
+        "description": "Hpc user that will be owner of all files in the hpc folder structure."
+      }
+    },
+    "hpcUid": {
+      "type": "int",
+      "metadata": {
+        "description": "Hpc User ID."
+      }
+    },
+    "hpcGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Hpc Group."
+      }
+    },
+    "hpcGid": {
+      "type": "int",
+      "metadata": {
+        "description": "Hpc Group ID."
+      }
+    }
+  },
+  "variables": {
+    "deploymentUniqueString": "[uniqueString(concat(deployment().name,resourceGroup().id))]",
+    "peering1Name": "[concat(parameters('vnetName'),'-peerto-',parameters('beeGfsVnetName'))]",
+    "peering2Name": "[concat(parameters('beeGfsVnetName'),'-peerto-',parameters('vnetName'))]",
+    "installParams": "[concat(parameters('beeGfsMasterName'),' ', parameters('beeGfsMountPoint'),' ', parameters('beegfsHpcUserHomeFolder'), ' ',  parameters('hpcUser'), ' ',  parameters('hpcUid'), ' ',  parameters('hpcGroup'),' ',  parameters('hpcGid'), ' ', parameters('dnsDomainName'))]",
+    "gpuNodesVMsList": {
+      "copy": [
+        {
+          "name": "items",
+          "count": "[parameters('gpuNodesCount')]",
+          "input": {
+            "name": "[concat(parameters('nodeNameSuffix'),'-',copyIndex('items',1))]"
+          }
+        }
+      ]
+    }
+  },
+  "resources": [
+    {
+      "condition": true,
+      "comments": "Vnet Peering from Photoscan Vnet to BeeGFS vnet",
+      "name": "[concat(variables('deploymentUniqueString'),'-Peering1-PeeringDeployment')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.deploymentApiVersion]",
+      "resourceGroup": "[parameters('vnetRG')]",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+              "name": "[concat(parameters('vnetName'),'/',variables('peering1Name'))]",
+              "apiVersion": "[parameters('deploymentConfig').apiVersions.vnetPeeringApiVersion]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "allowVirtualNetworkAccess": "true",
+                "allowForwardedTraffic": "false",
+                "allowGatewayTransit": "false",
+                "useRemoteGateways": "false",
+                "remoteVirtualNetwork": {
+                  "id": "[resourceId(parameters('beeGfsVnetRG'),'Microsoft.Network/virtualNetworks',parameters('beeGfsVnetName'))]"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "condition": true,
+      "comments": "Vnet Peering from BeeGFS vnet to Photoscan Vnet",
+      "name": "[concat(variables('deploymentUniqueString'),'-Peering2-PeeringDeployment')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.deploymentApiVersion]",
+      "resourceGroup": "[parameters('beeGfsVnetRG')]",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+              "name": "[concat(parameters('beeGfsVnetName'),'/',variables('peering2Name'))]",
+              "apiVersion": "[parameters('deploymentConfig').apiVersions.vnetPeeringApiVersion]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "allowVirtualNetworkAccess": "true",
+                "allowForwardedTraffic": "false",
+                "allowGatewayTransit": "false",
+                "useRemoteGateways": "false",
+                "remoteVirtualNetwork": {
+                  "id": "[resourceId(parameters('vnetRG'),'Microsoft.Network/virtualNetworks',parameters('vnetName'))]"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "condition": true,
+      "comments": "CustomScript extension execution to install BeeGFS client on photoscan Node",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('gpuNodesVMsList').items[copyIndex()].name,'/LinuxCustomScript')]",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat(variables('deploymentUniqueString'),'-Peering2-PeeringDeployment')]",
+        "[concat(variables('deploymentUniqueString'),'-Peering1-PeeringDeployment')]"
+      ],
+      "copy": {
+        "name": "vmLinuxCustomScriptCopy",
+        "count": "[length(variables('gpuNodesVMsList').items)]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('_artifactsLocation'), '/scripts/install_beegfs_client.sh', parameters('_artifactsLocationSasToken'))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('bash install_beegfs_client.sh ', variables('installParams'))]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

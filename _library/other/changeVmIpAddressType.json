@@ -1,0 +1,133 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "nicApiVersion": {
+      "type": "string",
+      "defaultValue": "2017-06-01"
+    },
+    "deploymentApiVersion": {
+      "type": "string",
+      "defaultValue": "2017-05-10"
+    },
+    "deploymentUniqueString": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "sasToken": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "vmId": {
+      "type": "string"
+    },
+    "privateIpAddressType": {
+      "type": "string",
+      "allowedValues": [
+        "Static",
+        "Dynamic"
+      ],
+      "defaultValue": "Static"
+    },
+    "nicOptionalAttributeSet": {
+      "type": "string",
+      "allowedValues": [
+        "all",
+        "none",
+        "nsg",
+        "nsg-pip",
+        "nsg-lbBe",
+        "nsg-lbBe-lbNat",
+        "nsg-LbNat",
+        "nsg-pip-lbBe",
+        "nsg-pip-lbBe-lbNat",
+        "nsg-pip-LbNat",
+        "pip",
+        "pip-lbBe",
+        "pip-lbBe-lbNat",
+        "pip-LbNat",
+        "lbBe",
+        "lbBe-lbNat",
+        "LbNat"
+      ],
+      "defaultValue": "none"
+    }
+  },
+  "variables": {
+    "getRefTemplateName": "getReference.json",
+    "getRefSuffix": "getVmRef",
+    "getRefUrl": "[uri(deployment().properties.templateLink.uri, concat(variables('getRefTemplateName'),parameters('sasToken')))]",
+    "setVmIpAddressTypeTemplateName": "setVmIpAddressType.json",
+    "setVmIpAddressTypeTemplateNameBuildingBlockUrl": "[uri(deployment().properties.templateLink.uri, concat(variables('setVmIpAddressTypeTemplateName'),parameters('sasToken')))]"
+  },
+  "resources": [
+    {
+      "comments": "Getting reference for a VM",
+      "name": "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[parameters('deploymentApiVersion')]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('getRefUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "deploymentUniqueString": {
+            "value": "[parameters('deploymentUniqueString')]"
+          },
+          "sasToken": {
+            "value": "[parameters('sasToken')]"
+          },
+          "resourceId": {
+            "value": "[parameters('vmId')]"
+          },
+          "apiVersion": {
+            "value": "2017-12-01"
+          }
+        }
+      }
+    },
+    {
+      "comments": "Changes the Private IP Address Type of a VM to Static or Dynamic",
+      "name": "[concat(parameters('deploymentUniqueString'),'-vmIpAddresstypeChange')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[parameters('deploymentApiVersion')]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('setVmIpAddressTypeTemplateNameBuildingBlockUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "nicApiVersion": {
+            "value": "[parameters('nicApiVersion')]"
+          },
+          "deploymentApiVersion": {
+            "value": "[parameters('deploymentApiVersion')]"
+          },
+          "deploymentUniqueString": {
+            "value": "[parameters('deploymentUniqueString')]"
+          },
+          "vm": {
+            "value": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value]"
+          },
+          "privateIpAddressType": {
+            "value": "[parameters('privateIpAddressType')]"
+          },
+          "nicOptionalAttributeSet": {
+            "value": "[parameters('nicOptionalAttributeSet')]"
+          },
+          "sasToken": {
+            "value": "[parameters('sasToken')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+  }
+}

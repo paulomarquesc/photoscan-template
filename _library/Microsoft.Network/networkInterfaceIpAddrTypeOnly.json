@@ -1,0 +1,622 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "nicApiVersion": {
+      "type": "string",
+      "defaultValue": "2017-06-01"
+    },
+    "deploymentApiVersion": {
+      "type": "string",
+      "defaultValue": "2017-05-10"
+    },
+    "deploymentUniqueString": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string"
+    },
+    "networkInterfaceId": {
+      "type": "string"
+    },
+    "privateIpAddressType": {
+      "type": "string",
+      "allowedValues": [
+        "Static",
+        "Dynamic"
+      ],
+      "defaultValue": "Static"
+    },
+    "nicOptionalAttributeSet": {
+      "type": "string",
+      "allowedValues": [
+        "all",
+        "none",
+        "nsg",
+        "nsg-pip",
+        "nsg-lbBe",
+        "nsg-lbBe-lbNat",
+        "nsg-LbNat",
+        "nsg-pip-lbBe",
+        "nsg-pip-lbBe-lbNat",
+        "nsg-pip-LbNat",
+        "pip",
+        "pip-lbBe",
+        "pip-lbBe-lbNat",
+        "pip-LbNat",
+        "lbBe",
+        "lbBe-lbNat",
+        "LbNat"
+      ],
+      "defaultValue": "none"
+    },
+    "sasToken": {
+      "type": "string",
+      "defaultValue": ""
+    }
+  },
+  "variables": {
+    "nicName": "[split(parameters('networkInterfaceId'),'/')[8]]",
+    "getRefTemplateName": "getReference.json",
+    "getRefSuffix": "getNicRef",
+    "getRefUrl": "[uri(replace(deployment().properties.templateLink.uri,'Microsoft.Network','other'), concat(variables('getRefTemplateName'),parameters('sasToken')))]"
+  },
+  "resources": [
+    {
+      "comments": "Getting reference for the NIC",
+      "name": "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[parameters('deploymentApiVersion')]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('getRefUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "deploymentUniqueString": {
+            "value": "[parameters('deploymentUniqueString')]"
+          },
+          "sasToken": {
+            "value": "[parameters('sasToken')]"
+          },
+          "resourceId": {
+            "value": "[parameters('networkInterfaceId')]"
+          },
+          "apiVersion": {
+            "value": "2017-06-01"
+          }
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'all')]",
+      "comments": "Network Interface Static Ip Address Setting - works only with 1 ip configuration, all optional attributes (publicIpAddress, loadBalancerBackendAddressPools, loadBalancerInboundNatRules, networkSecurityGroup",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'all'),variables('nicName'),'ignore1')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "tags": "[if(equals(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags,json('null')),json('null'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags)]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "publicIPAddress": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.publicIpAddress]",
+              "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+              "privateIPAddress": "[if(equals(parameters('privateIpAddressType'),'Static'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.privateIpAddress,json('null'))]",
+              "subnet": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.subnet]",
+              "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.primary]",
+              "loadBalancerBackendAddressPools": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.loadBalancerBackendAddressPools]",
+              "loadBalancerInboundNatRules": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.loadBalancerInboundNatRules]"
+            }
+          }
+        ],
+        "dnsSettings": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.dnsSettings]",
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "networkSecurityGroup": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.networkSecurityGroup]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'none')]",
+      "comments": "Network Interface Static Ip Address Setting - works only with 1 ip configuration and no optional attribute",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'none'),variables('nicName'),'ignore2')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "tags": "[if(equals(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags,json('null')),json('null'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags)]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+              "privateIPAddress": "[if(equals(parameters('privateIpAddressType'),'Static'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.privateIpAddress,json('null'))]",
+              "subnet": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.subnet]",
+              "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.primary]"
+            }
+          }
+        ],
+        "dnsSettings": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.dnsSettings]",
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'nsg')]",
+      "comments": "Network Interface Static Ip Address Setting - works only with 1 ip configuration and networkSecurityGroup only",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'nsg'),variables('nicName'),'ignore3')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "tags": "[if(equals(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags,json('null')),json('null'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags)]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+              "privateIPAddress": "[if(equals(parameters('privateIpAddressType'),'Static'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.privateIpAddress,json('null'))]",
+              "subnet": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.subnet]",
+              "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.primary]"
+            }
+          }
+        ],
+        "dnsSettings": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.dnsSettings]",
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]",
+        "networkSecurityGroup": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.networkSecurityGroup]"
+
+      }
+    },
+    {
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'nsg-pip')]",
+      "comments": "Network Interface Static Ip Address Setting - works only with 1 ip configuration and networkSecurityGroup+PublicIP",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'nsg-pip'),variables('nicName'),'ignore4')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "tags": "[if(equals(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags,json('null')),json('null'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags)]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "publicIPAddress": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.publicIpAddress]",
+              "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+              "privateIPAddress": "[if(equals(parameters('privateIpAddressType'),'Static'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.privateIpAddress,json('null'))]",
+              "subnet": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.subnet]",
+              "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.primary]"
+            }
+          }
+        ],
+        "dnsSettings": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.dnsSettings]",
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]",
+        "networkSecurityGroup": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.networkSecurityGroup]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'nsg-lbBe')]",
+      "comments": "Network Interface Static Ip Address Setting - works only with 1 ip configuration and networkSecurityGroup+LoadBalancerBackEnd",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'nsg-lbBe'),variables('nicName'),'ignore5')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "tags": "[if(equals(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags,json('null')),json('null'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags)]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+              "privateIPAddress": "[if(equals(parameters('privateIpAddressType'),'Static'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.privateIpAddress,json('null'))]",
+              "subnet": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.subnet]",
+              "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.primary]",
+              "loadBalancerBackendAddressPools": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.loadBalancerBackendAddressPools]"
+            }
+          }
+        ],
+        "dnsSettings": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.dnsSettings]",
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]",
+        "networkSecurityGroup": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.networkSecurityGroup]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'nsg-lbBe-lbNat')]",
+      "comments": "Network Interface Static Ip Address Setting - works only with 1 ip configuration and networkSecurityGroup+LoadBalancerBackEnd+LoadBalancerNat",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'nsg-lbBe-LbNat'),variables('nicName'),'ignore6')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "tags": "[if(equals(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags,json('null')),json('null'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags)]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+              "privateIPAddress": "[if(equals(parameters('privateIpAddressType'),'Static'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.privateIpAddress,json('null'))]",
+              "subnet": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.subnet]",
+              "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.primary]",
+              "loadBalancerBackendAddressPools": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.loadBalancerBackendAddressPools]",
+              "loadBalancerInboundNatRules": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.loadBalancerInboundNatRules]"
+            }
+          }
+        ],
+        "dnsSettings": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.dnsSettings]",
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]",
+        "networkSecurityGroup": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.networkSecurityGroup]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'nsg-lbNat')]",
+      "comments": "Network Interface Static Ip Address Setting - works only with 1 ip configuration and networkSecurityGroup+LoadBalancerNat",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'nsg-LbNat'),variables('nicName'),'ignore7')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "tags": "[if(equals(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags,json('null')),json('null'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags)]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+              "privateIPAddress": "[if(equals(parameters('privateIpAddressType'),'Static'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.privateIpAddress,json('null'))]",
+              "subnet": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.subnet]",
+              "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.primary]",
+              "loadBalancerInboundNatRules": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.loadBalancerInboundNatRules]"
+            }
+          }
+        ],
+        "dnsSettings": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.dnsSettings]",
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]",
+        "networkSecurityGroup": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.networkSecurityGroup]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'nsg-pip-lbBe')]",
+      "comments": "Network Interface Static Ip Address Setting - works only with 1 ip configuration and networkSecurityGroup+pip+LoadBalancerBackEnd",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'nsg-pip-lbBe'),variables('nicName'),'ignore8')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "tags": "[if(equals(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags,json('null')),json('null'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags)]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "publicIPAddress": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.publicIpAddress]",
+              "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+              "privateIPAddress": "[if(equals(parameters('privateIpAddressType'),'Static'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.privateIpAddress,json('null'))]",
+              "subnet": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.subnet]",
+              "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.primary]",
+              "loadBalancerBackendAddressPools": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.loadBalancerBackendAddressPools]"
+            }
+          }
+        ],
+        "dnsSettings": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.dnsSettings]",
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]",
+        "networkSecurityGroup": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.networkSecurityGroup]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'nsg-pip-lbBe-lbNat')]",
+      "comments": "Network Interface Static Ip Address Setting - works only with 1 ip configuration and networkSecurityGroup+pip+LoadBalancerBackEnd+LoadBalancerNat",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'nsg-pip-lbBe-LbNat'),variables('nicName'),'ignore9')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "tags": "[if(equals(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags,json('null')),json('null'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags)]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "publicIPAddress": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.publicIpAddress]",
+              "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+              "privateIPAddress": "[if(equals(parameters('privateIpAddressType'),'Static'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.privateIpAddress,json('null'))]",
+              "subnet": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.subnet]",
+              "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.primary]",
+              "loadBalancerBackendAddressPools": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.loadBalancerBackendAddressPools]",
+              "loadBalancerInboundNatRules": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.loadBalancerInboundNatRules]"
+            }
+          }
+        ],
+        "dnsSettings": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.dnsSettings]",
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]",
+        "networkSecurityGroup": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.networkSecurityGroup]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'nsg-pip-lbNat')]",
+      "comments": "Network Interface Static Ip Address Setting - works only with 1 ip configuration and networkSecurityGroup+pip+LoadBalancerNat",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'nsg-pip-LbNat'),variables('nicName'),'ignore10')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "tags": "[if(equals(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags,json('null')),json('null'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags)]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+              "privateIPAddress": "[if(equals(parameters('privateIpAddressType'),'Static'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.privateIpAddress,json('null'))]",
+              "subnet": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.subnet]",
+              "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.primary]",
+              "loadBalancerInboundNatRules": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.loadBalancerInboundNatRules]"
+            }
+          }
+        ],
+        "dnsSettings": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.dnsSettings]",
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]",
+        "networkSecurityGroup": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.networkSecurityGroup]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'pip')]",
+      "comments": "Network Interface Static Ip Address Setting - works only with 1 ip configuration and publicIp",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'pip'),variables('nicName'),'ignore11')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "tags": "[if(equals(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags,json('null')),json('null'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags)]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "publicIPAddress": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.publicIpAddress]",
+              "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+              "privateIPAddress": "[if(equals(parameters('privateIpAddressType'),'Static'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.privateIpAddress,json('null'))]",
+              "subnet": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.subnet]",
+              "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.primary]"
+            }
+          }
+        ],
+        "dnsSettings": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.dnsSettings]",
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'pip-lbBe')]",
+      "comments": "Network Interface Static Ip Address Setting - works only with 1 ip configuration and pip+LoadBalancerBackEnd",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'pip-lbBe'),variables('nicName'),'ignore12')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "tags": "[if(equals(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags,json('null')),json('null'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags)]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "publicIPAddress": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.publicIpAddress]",
+              "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+              "privateIPAddress": "[if(equals(parameters('privateIpAddressType'),'Static'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.privateIpAddress,json('null'))]",
+              "subnet": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.subnet]",
+              "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.primary]",
+              "loadBalancerBackendAddressPools": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.loadBalancerBackendAddressPools]"
+            }
+          }
+        ],
+        "dnsSettings": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.dnsSettings]",
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'pip-lbBe-lbNat')]",
+      "comments": "Network Interface Static Ip Address Setting - works only with 1 ip configuration and pip+LoadBalancerBackEnd+LoadBalancerNat",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'pip-lbBe-LbNat'),variables('nicName'),'ignore13')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "tags": "[if(equals(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags,json('null')),json('null'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags)]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "publicIPAddress": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.publicIpAddress]",
+              "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+              "privateIPAddress": "[if(equals(parameters('privateIpAddressType'),'Static'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.privateIpAddress,json('null'))]",
+              "subnet": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.subnet]",
+              "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.primary]",
+              "loadBalancerBackendAddressPools": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.loadBalancerBackendAddressPools]",
+              "loadBalancerInboundNatRules": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.loadBalancerInboundNatRules]"
+            }
+          }
+        ],
+        "dnsSettings": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.dnsSettings]",
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'pip-lbNat')]",
+      "comments": "Network Interface Static Ip Address Setting - works only with 1 ip configuration and pip+LoadBalancerNat",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'nsg-pip-LbNat'),variables('nicName'),'ignore14')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "tags": "[if(equals(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags,json('null')),json('null'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags)]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+              "privateIPAddress": "[if(equals(parameters('privateIpAddressType'),'Static'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.privateIpAddress,json('null'))]",
+              "subnet": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.subnet]",
+              "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.primary]",
+              "loadBalancerInboundNatRules": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.loadBalancerInboundNatRules]"
+            }
+          }
+        ],
+        "dnsSettings": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.dnsSettings]",
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'lbBe')]",
+      "comments": "Network Interface Static Ip Address Setting - works only with 1 ip configuration and LoadBalancerBackEnd",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'lbBe'),variables('nicName'),'ignore15')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "tags": "[if(equals(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags,json('null')),json('null'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags)]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+              "privateIPAddress": "[if(equals(parameters('privateIpAddressType'),'Static'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.privateIpAddress,json('null'))]",
+              "subnet": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.subnet]",
+              "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.primary]",
+              "loadBalancerBackendAddressPools": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.loadBalancerBackendAddressPools]"
+            }
+          }
+        ],
+        "dnsSettings": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.dnsSettings]",
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'lbBe-lbNat')]",
+      "comments": "Network Interface Static Ip Address Setting - works only with 1 ip configuration and LoadBalancerBackEnd+LoadBalancerNat",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'lbBe-LbNat'),variables('nicName'),'ignore16')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "tags": "[if(equals(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags,json('null')),json('null'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags)]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+              "privateIPAddress": "[if(equals(parameters('privateIpAddressType'),'Static'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.privateIpAddress,json('null'))]",
+              "subnet": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.subnet]",
+              "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.primary]",
+              "loadBalancerBackendAddressPools": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.loadBalancerBackendAddressPools]",
+              "loadBalancerInboundNatRules": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.loadBalancerInboundNatRules]"
+            }
+          }
+        ],
+        "dnsSettings": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.dnsSettings]",
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('nicOptionalAttributeSet'),'lbNat')]",
+      "comments": "Network Interface Static Ip Address Setting - works only with 1 ip configuration and LoadBalancerNat",
+      "name": "[if(equals(parameters('nicOptionalAttributeSet'),'lbNat'),variables('nicName'),'ignore17')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('nicApiVersion')]",
+      "tags": "[if(equals(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags,json('null')),json('null'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.tags)]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "[parameters('privateIpAddressType')]",
+              "privateIPAddress": "[if(equals(parameters('privateIpAddressType'),'Static'),reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.privateIpAddress,json('null'))]",
+              "subnet": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.subnet]",
+              "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.primary]",
+              "loadBalancerInboundNatRules": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.ipConfigurations[0].properties.loadBalancerInboundNatRules]"
+            }
+          }
+        ],
+        "dnsSettings": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.dnsSettings]",
+        "enableIPForwarding": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableIPForwarding]",
+        "primary": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.primary]",
+        "enableAcceleratedNetworking": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.enableAcceleratedNetworking]"
+      }
+    }
+  ]
+}

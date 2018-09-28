@@ -1,0 +1,205 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+     "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location where the resources of this template will be deployed to"
+      },
+      "defaultValue": "westus2"
+    },
+    "deploymentConfig": {
+      "type":"object",
+      "metadata": {
+        "description":"Object that contains library paths, api versions, SAS token, from master template."
+      }
+    },
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network name"
+      },
+      "defaultValue": "Sofs-Vnet"
+    },
+    "vnetAdressSpace":{
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network Address Space"
+      },
+      "defaultValue": "10.0.0.0/16"
+    },
+    "jumpboxSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Jumpbox subnet name"
+      },
+      "defaultValue": "Jumpbox-SN"
+    },
+    "jumpboxSubnetAdressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Jumpbox subnet address prefix"
+      },
+      "defaultValue": "10.0.0.0/24"
+    },
+    "photoscanSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Photoscan servers (Scheduler+Node) subnet name"
+      },
+      "defaultValue": "Photoscan-SN"
+    },
+    "photoscanSubnetAdressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Photoscan subnet address prefix."
+      },
+      "defaultValue": "10.0.1.0/24"
+    },
+    "adSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet where Domain Controllers will be deployed to"
+      },
+      "defaultValue": "AD-SN"
+    },
+    "adSubnetAdressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "AD subnet address prefix"
+      },
+      "defaultValue": "10.0.2.0/24"
+    }
+  },
+  "variables": {
+    "deploymentUniqueString": "[uniqueString(concat(deployment().name,resourceGroup().id))]",
+    "nsgInfo": [
+      {
+        "name": "JumpBox-SN-NSG",
+        "id": "[resourceId('Microsoft.Network/networkSecurityGroups','JumpBox-SN-NSG')]",
+        "nsgSecurityRules": [
+          {
+            "name": "allow-any-from-vnet",
+            "properties": {
+              "access": "Allow",
+              "description": "Allow all inbound traffic",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "*",
+              "direction": "Inbound",
+              "priority": 100,
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "sourcePortRange": "*"
+            }
+          },
+          {
+            "name": "allow-ssh-from-all",
+            "properties": {
+              "access": "Allow",
+              "description": "Allow SSH inbound traffic",
+              "destinationAddressPrefix": "10.0.1.0/24",
+              "destinationPortRange": "22",
+              "direction": "Inbound",
+              "priority": 200,
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*"
+            }
+          },
+          {
+            "name": "allow-RDP-from-all",
+            "properties": {
+              "access": "Allow",
+              "description": "Allow SSH inbound traffic",
+              "destinationAddressPrefix": "10.0.1.0/24",
+              "destinationPortRange": "3389",
+              "direction": "Inbound",
+              "priority": 300,
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "*",
+              "sourcePortRange": "*"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "resources": [
+    {
+      "condition": true,
+      "comments": "Network Security Groups related to Jumbox",
+      "name": "[concat(variables('deploymentUniqueString'),'-',variables('nsgInfo')[copyIndex()].name)]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.deploymentApiVersion]",
+      "dependsOn": [],
+      "copy": {
+        "name": "jumpboxNsgsCopy",
+        "count": "[length(variables('nsgInfo'))]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[parameters('deploymentConfig').libraryItems.nsgBuildingBlockUri]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "deploymentUniqueString": {
+            "value": "[variables('deploymentUniqueString')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "nsgName": {
+            "value": "[variables('nsgInfo')[copyIndex()].name]"
+          },
+          "securityRules": {
+            "value": "[variables('nsgInfo')[copyIndex()].nsgSecurityRules]"
+          }
+        }
+      }
+    },
+    {
+      "condition": true,
+      "comments": "Virtual Network",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.vnetApiVersion]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[parameters('vnetName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "jumpboxNsgsCopy"
+      ],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetAdressSpace')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('jumpboxSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('jumpboxSubnetAdressPrefix')]",
+              "networkSecurityGroup":{
+                "id":"[variables('nsgInfo')[0].id]"
+              }
+            }
+          },
+          {
+            "name": "[parameters('photoscanSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('photoscanSubnetAdressPrefix')]"
+            }
+          },
+          {
+            "name": "[parameters('adSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('adSubnetAdressPrefix')]"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {}
+}

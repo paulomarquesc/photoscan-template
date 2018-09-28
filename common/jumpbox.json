@@ -1,0 +1,445 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location where the resources of this template will be deployed to"
+      },
+      "defaultValue": "westus2"
+    },
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network name"
+      },
+      "defaultValue": "Sofs-Vnet"
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of admin account of the VMs, this name cannot be well know names, like root, admin, administrator, guest, etc."
+      }
+    },
+    "adminPassword": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin Password."
+      }
+    },
+    "vnetRG": {
+      "type": "string",
+      "metadata": {
+        "description": "Resoure group name where the virtual network is located."
+      }
+    },
+    "sshKeyData": {
+      "type": "string",
+      "metadata": {
+        "description": "SSH rsa public key file as a string."
+      }
+    },
+    "dnsDomainName": {
+      "type": "string",
+      "defaultValue": "sofs.local",
+      "metadata": {
+        "description": "DNS domain name use to build the host's FQDN."
+      }
+    },
+    "adDomainNetBIOSName": {
+      "type": "string",
+      "defaultValue": "sofs",
+      "metadata": {
+        "description": "NetBIOS domain name for Active Directory deployment."
+      }
+    },
+    "deploymentConfig": {
+      "type": "object",
+      "metadata": {
+        "description": "Object that contains library paths, api versions, SAS token, from master template."
+      }
+    },
+    "deployLinuxJumpbox":{
+      "type": "string",
+      "metadata": {
+        "description": "Should this template deploy a Linux Jumpbox"
+      },
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "defaultValue": "yes"
+    },
+    "windowsJumpboxVmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Windows Jumpbox VM Size."
+      },
+      "defaultValue": "Standard_DS2_v2"
+    },
+    "linuxJumpboxVmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Linux Jumpbox VM Size."
+      },
+      "defaultValue": "Standard_DS2_v2"
+    },
+    "windowsJumpboxVmName":{
+      "type": "string",
+      "metadata": {
+        "description": "Windows Jumpbox VM Name."
+      },
+      "defaultValue": "wjb-01"
+    },
+    "linuxJumpboxVmName":{
+      "type": "string",
+      "metadata": {
+        "description": "Linux Jumpbox VM Name."
+      },
+      "defaultValue": "ljb-01"
+    },
+    "windowsJumpboxIpAddress":{
+      "type": "string",
+      "metadata": {
+        "description": "Windows Jumpbox VM Ip Address."
+      },
+      "defaultValue":"10.0.0.4"
+    },
+    "linuxJumpboxIpAddress":{
+      "type": "string",
+      "metadata": {
+        "description": "Windows Jumpbox VM Ip Address."
+      },
+      "defaultValue":"10.0.0.5"
+    },
+    "jumpboxSubnetName":{
+      "type": "string",
+      "metadata": {
+        "description": "Jumpbox Subnet Name."
+      },
+      "defaultValue":"Junmpbox-sn"
+    }
+  },
+  "variables": {
+    "deploymentUniqueString": "[uniqueString(concat(deployment().name,resourceGroup().id))]",
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "jumpboxModuleUrl": "[concat(parameters('_artifactsLocation'),'/dsc/JumpboxConfig.zip')]",
+    "jumpboxConfig": "JumpboxConfig.ps1\\JumpboxConfig",
+    "vnetId": "[resourceId(parameters('vnetRg'),'Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
+    "jmpSubnetId": "[concat(variables('vnetId'),'/subnets/',parameters('jumpboxSubnetName'))]",
+    "windowsJumpboxes": [
+      {
+        "name": "[parameters('windowsJumpboxVmName')]",
+        "storageAccountType": "Standard_LRS",
+        "osDiskSizeGb": 128,
+        "vmSize": "[parameters('windowsJumpboxVmSize')]",
+        "subnetId": "[variables('jmpSubnetId')]",
+        "privateIpAddress": "[parameters('windowsJumpboxIpAddress')]",
+        "imageInfo": {
+          "publisher": "MicrosoftWindowsServer",
+          "offer": "WindowsServer",
+          "sku": "2016-Datacenter",
+          "version": "latest"
+        }
+      }
+    ],
+    "linuxJumpboxes": [
+      {
+        "name": "[parameters('linuxJumpboxVmName')]",
+        "storageAccountType": "Standard_LRS",
+        "osDiskSizeGb": 30,
+        "vmSize": "[parameters('linuxJumpboxVmSize')]",
+        "subnetId": "[variables('jmpSubnetId')]",
+        "privateIpAddress": "[parameters('linuxJumpboxIpAddress')]",
+        "imageInfo": {
+          "publisher": "OpenLogic",
+          "offer": "CentOS",
+          "sku": "7.5",
+          "version": "latest"
+        }
+      }
+    ]
+  },
+  "resources": [
+    {
+      "condition": true,
+      "comments": "Windows Jumpboxes",
+      "name": "[concat(variables('deploymentUniqueString'),'-',variables('windowsJumpboxes')[copyIndex()].name)]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.deploymentApiVersion]",
+      "copy": {
+        "name": "windowsJumboxVMsCopy",
+        "count": "[length(variables('windowsJumpboxes'))]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[parameters('deploymentConfig').libraryItems.vmBuildingBlockUri]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "deploymentUniqueString": {
+            "value": "[variables('deploymentUniqueString')]"
+          },
+          "nicApiVersion": {
+            "value": "[parameters('deploymentConfig').apiVersions.nicApiVersion]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "completeVmNameProvided": {
+            "value": "yes"
+          },
+          "vmNamePrefix": {
+            "value": "[variables('windowsJumpboxes')[copyIndex()].name]"
+          },
+          "vmSize": {
+            "value": "[variables('windowsJumpboxes')[copyIndex()].vmSize]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "imageInfo": {
+            "value": "[variables('windowsJumpboxes')[copyIndex()].imageInfo]"
+          },
+          "sasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "attachDataDisks": {
+            "value": "no"
+          },
+          "storageAccountType": {
+            "value": "[variables('windowsJumpboxes')[copyIndex()].storageAccountType]"
+          },
+          "useAvailabilitySet": {
+            "value": "no"
+          },
+          "subnetId": {
+            "value": "[variables('windowsJumpboxes')[copyIndex()].subnetId]"
+          },
+          "enableAcceleratedNetworking": {
+            "value": false
+          },
+          "usePublicIpAddress": {
+            "value": "yes"
+          },
+          "publicIpAddressType": {
+            "value": "Dynamic"
+          },
+          "includeVmInAppGwBe": {
+            "value": "no"
+          },
+          "attachNsg": {
+            "value": "no"
+          },
+          "configureDnsServers": {
+            "value": "no"
+          },
+          "privateIpAddressType": {
+            "value": "Static"
+          },
+          "privateIpAddress": {
+            "value": "[variables('windowsJumpboxes')[copyIndex()].privateIpAddress]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          }
+        }
+      }
+    },
+    {
+      "condition": true,
+      "comments": "DOMAIN JOIN - Domain Windows joining VM",
+      "name": "[concat(variables('deploymentUniqueString'),'domainJoiningVm',variables('windowsJumpboxes')[copyindex()].name)]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.deploymentApiVersion]",
+      "dependsOn": [
+        "windowsJumboxVMsCopy"
+      ],
+      "copy": {
+        "name": "windowsJumpboxDomainJoinCopy",
+        "count": "[length(variables('windowsJumpboxes'))]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[parameters('deploymentConfig').libraryItems.joinVmToDomainUri]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "apiVersion": {
+            "value": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmList": {
+            "value": "[variables('windowsJumpboxes')[copyIndex()].name]"
+          },
+          "domainJoinUserName": {
+            "value": "[concat(parameters('adDomainNetBIOSName'),'\\',parameters('adminUsername'))]"
+          },
+          "domainJoinUserPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "domainFQDN": {
+            "value": "[parameters('dnsDomainName')]"
+          }
+        }
+      }
+    },
+    {
+      "condition": true,
+      "comments": "Installs all necessary AD Management tools in the Windows Jumpbox",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('windowsJumpboxes')[copyIndex()].name,'/configureJumpboxVm')]",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "windowsJumboxVMsCopy"
+      ],
+      "copy": {
+        "name": "windowsJumpboxConfigurationCopy",
+        "count": "[length(variables('windowsJumpboxes'))]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "2.73",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "modulesUrl": "[variables('jumpboxModuleUrl')]",
+          "sasToken": "[parameters('_artifactsLocationSasToken')]",
+          "configurationFunction": "[variables('jumpboxConfig')]",
+          "properties": {}
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('deployLinuxJumpbox'),'yes')]",
+      "comments": "Linux VMs Public Ip Addresses",
+      "name": "[concat(variables('linuxJumpboxes')[copyIndex()].name,'-PIP')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.publicIpApiVersion]",
+      "copy": {
+        "name": "linuxPipCopy",
+        "count": "[length(variables('linuxJumpboxes'))]"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "publicIPAddressVersion": "IPv4"
+      }
+    },
+    {
+      "condition": "[equals(parameters('deployLinuxJumpbox'),'yes')]",
+      "comments": "Linux VMs Network Interfaces",
+      "name": "[concat(variables('linuxJumpboxes')[copyIndex()].name,'-NIC')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.nicApiVersion]",
+      "dependsOn": [
+        "linuxPipCopy"
+      ],
+      "copy": {
+        "name": "linuxNicCopy",
+        "count": "[length(variables('linuxJumpboxes'))]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('linuxJumpboxes')[copyIndex()].privateIpAddress]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',concat(variables('linuxJumpboxes')[copyIndex()].name,'-PIP'))]"
+              },
+              "subnet": {
+                "id": "[variables('linuxJumpboxes')[copyIndex()].subnetId]"
+              }
+            }
+          }
+        ],
+        "enableAcceleratedNetworking": true,
+        "primary": true
+      }
+    },
+    {
+      "condition": "[equals(parameters('deployLinuxJumpbox'),'yes')]",
+      "comments": "Deploying virtual machines",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.vmApiVersion]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('linuxJumpboxes')[copyIndex()].name]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "linuxNicCopy"
+      ],
+      "copy": {
+        "name": "vmCopy",
+        "count": "[length(variables('linuxJumpboxes'))]"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('linuxJumpboxes')[copyIndex()].vmSize]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('linuxJumpboxes')[copyIndex()].name,'.',parameters('dnsDomainName'))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshKeyData')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('linuxJumpboxes')[copyIndex()].imageInfo.publisher]",
+            "offer": "[variables('linuxJumpboxes')[copyIndex()].imageInfo.offer]",
+            "sku": "[variables('linuxJumpboxes')[copyIndex()].imageInfo.sku]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('linuxJumpboxes')[copyIndex()].name,'-',copyIndex(1),'-osdisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[variables('linuxJumpboxes')[copyIndex()].storageAccountType]"
+            },
+            "diskSizeGB": "[variables('linuxJumpboxes')[copyIndex()].osDiskSizeGB]"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('linuxJumpboxes')[copyIndex()].name,'-NIC'))]",
+              "properties": {
+                "primary": true
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

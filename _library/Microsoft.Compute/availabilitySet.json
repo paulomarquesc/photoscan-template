@@ -1,0 +1,62 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "apiVersion": {
+      "type": "string",
+      "defaultValue": "2017-03-30"
+    },
+    "deploymentUniqueString": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "location": {
+      "type": "string"
+    },
+    "availabilitySetName": {
+      "type": "string"
+    },
+    "updateDomains": {
+      "type": "int",
+      "defaultValue": 5
+    },
+    "faultDomains": {
+      "type": "int",
+      "defaultValue": 2
+    },
+    "managedDisksAligned": {
+      "type": "string",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "defaultValue": "yes"
+    },
+    "tags": {
+      "type": "object",
+      "defaultValue": {}
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[parameters('availabilitySetName')]",
+      "apiVersion": "[parameters('apiVersion')]",
+      "location": "[parameters('location')]",
+      "tags": "[if(equals(parameters('tags'),json('null')),json('null'),parameters('tags'))]",
+      "properties": {
+        "platformFaultDomainCount": "[parameters('faultDomains')]",
+        "platformUpdateDomainCount": "[parameters('updateDomains')]"
+      },
+      "sku": {
+        "name": "[if(equals(parameters('managedDisksAligned'),'yes'),'Aligned','Classic')]"
+      }
+    }
+  ],
+  "outputs": {
+    "avSetId": {
+      "value": "[resourceId('Microsoft.Compute/availabilitySets',parameters('availabilitySetName'))]",
+      "type": "string"
+    }
+  }
+}

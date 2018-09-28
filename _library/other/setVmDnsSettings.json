@@ -1,0 +1,89 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "nicApiVersion": {
+      "type": "string",
+      "defaultValue": "2017-06-01"
+    },
+    "deploymentApiVersion": {
+      "type": "string",
+      "defaultValue": "2017-05-10"
+    },
+    "deploymentUniqueString": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "sasToken": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "vm": {
+      "type": "object"
+    },
+    "dnsServers": {
+      "type": "array"
+    },
+    "nicOptionalAttributeSet": {
+      "type": "string",
+      "allowedValues": [
+        "all",
+        "none",
+        "nsg"
+      ],
+      "defaultValue": "nsg"
+    },
+    "nicCount":{
+      "type":"int",
+      "defaultValue": 1
+    }
+  },
+  "variables": {
+    "updateNicDnsTemplateName": "networkInterfaceDnsOnly.json",
+    "updateNicDnsBuildingBlockUrl": "[uri(replace(deployment().properties.templateLink.uri,'other','Microsoft.Network'), concat(variables('updateNicDnsTemplateName'),parameters('sasToken')))]",
+  },
+  "resources": [
+    {
+      "comments": "Updates a VM network interface with DNS settings",
+      "name": "[concat(parameters('deploymentUniqueString'),'-setVmNicDns-',split(parameters('vm').resourceId,'/')[2],copyIndex())]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[parameters('deploymentApiVersion')]",
+      "copy": {
+        "name": "vmDnsUpdateCopy",
+        "count": "[parameters('nicCount')]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('updateNicDnsBuildingBlockUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "nicApiVersion": {
+            "value": "2017-06-01"
+          },
+          "deploymentUniqueString": {
+            "value": "[parameters('deploymentUniqueString')]"
+          },
+          "location": {
+            "value": "[parameters('vm').location]"
+          },
+          "networkInterfaceId": {
+            "value": "[parameters('vm').properties.networkProfile.networkinterfaces[copyIndex()].id]"
+          },
+          "dnsServers": {
+            "value": "[parameters('dnsServers')]"
+          },
+          "sasToken": {
+            "value": "[parameters('sasToken')]"
+          },
+          "nicOptionalAttributeSet": {
+            "value": "[parameters('nicOptionalAttributeSet')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "nicApiVersion": {
+      "type": "string",
+      "defaultValue": "2017-06-01"
+    },
+    "deploymentApiVersion": {
+      "type": "string",
+      "defaultValue": "2017-05-10"
+    },
+    "deploymentUniqueString": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "sasToken": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "vmId": {
+      "type": "string"
+    },
+    "dnsServers": {
+      "type": "array"
+    },
+    "nicOptionalAttributeSet": {
+      "type": "string",
+      "allowedValues": [
+        "all",
+        "none",
+        "nsg"
+      ],
+      "defaultValue": "nsg"
+    }
+  },
+  "variables": {
+    "vmName": "[split(parameters('vmId'),'/')[8]]",
+    "getRefTemplateName": "getReference.json",
+    "getRefSuffix": "[concat('getVmRef',variables('vmName'))]",
+    "getRefUrl": "[uri(deployment().properties.templateLink.uri, concat(variables('getRefTemplateName'),parameters('sasToken')))]",
+    "setVmDnsSettingsTemplateName": "setVmDnsSettings.json",
+    "setVmDnsBuildingBlockUrl": "[uri(deployment().properties.templateLink.uri, concat(variables('setVmDnsSettingsTemplateName'),parameters('sasToken')))]"
+  },
+  "resources": [
+    {
+      "comments": "Getting reference for a VM",
+      "name": "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[parameters('deploymentApiVersion')]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('getRefUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "deploymentUniqueString": {
+            "value": "[parameters('deploymentUniqueString')]"
+          },
+          "sasToken": {
+            "value": "[parameters('sasToken')]"
+          },
+          "resourceId": {
+            "value": "[parameters('vmId')]"
+          },
+          "apiVersion": {
+            "value": "2017-12-01"
+          }
+        }
+      }
+    },
+    {
+      "comments": "Updates a VM network interface with DNS settings",
+      "name": "[concat(parameters('deploymentUniqueString'),'-NicDnsUpdt-',variables('getRefSuffix'))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[parameters('deploymentApiVersion')]",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('setVmDnsBuildingBlockUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "nicApiVersion": {
+            "value": "[parameters('nicApiVersion')]"
+          },
+          "deploymentApiVersion": {
+            "value": "[parameters('deploymentApiVersion')]"
+          },
+          "deploymentUniqueString": {
+            "value": "[parameters('deploymentUniqueString')]"
+          },
+          "vm": {
+            "value": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value]"
+          },
+          "dnsServers": {
+            "value": "[parameters('dnsServers')]"
+          },
+          "sasToken": {
+            "value": "[parameters('sasToken')]"
+          },
+          "nicCount":{
+            "value": "[length(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.networkProfile.networkinterfaces)]"
+          },
+          "nicOptionalAttributeSet": {
+            "value": "[parameters('nicOptionalAttributeSet')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+  }
+}

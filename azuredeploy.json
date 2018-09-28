@@ -1,0 +1,874 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location where the resources of this template will be deployed to"
+      },
+      "defaultValue": "eastus"
+    },
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network Name"
+      },
+      "defaultValue": "Photoscan-vnet"
+    },
+    "vnetAdressSpace": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network Address Space"
+      },
+      "defaultValue": "10.0.0.0/16"
+    },
+    "jumpboxSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Jumpbox subnet name"
+      },
+      "defaultValue": "Jumpbox-SN"
+    },
+    "jumpboxSubnetAdressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Jumpbox subnet address prefix"
+      },
+      "defaultValue": "10.0.0.0/24"
+    },
+    "photoscanSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Photoscan servers (Scheduler+Node) subnet name"
+      },
+      "defaultValue": "Photoscan-SN"
+    },
+    "photoscanSubnetAdressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "Photoscan subnet address prefix."
+      },
+      "defaultValue": "10.0.1.0/24"
+    },
+    "adSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet where Domain Controllers will be deployed to"
+      },
+      "defaultValue": "AD-SN"
+    },
+    "adSubnetAdressPrefix": {
+      "type": "string",
+      "metadata": {
+        "description": "AD subnet address prefix"
+      },
+      "defaultValue": "10.0.2.0/24"
+    },
+    "deployLinuxJumpbox": {
+      "type": "string",
+      "metadata": {
+        "description": "Should this template deploy a Linux Jumpbox"
+      },
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "defaultValue": "yes"
+    },
+    "useBeeGfsStorage": {
+      "type": "string",
+      "metadata": {
+        "description": "Should this template use BeeGfs storage"
+      },
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "defaultValue": "yes"
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of admin account of the VMs, this name cannot be well know names, like root, admin, administrator, guest, etc."
+      }
+    },
+    "adminPassword": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin password."
+      }
+    },
+    "dc1Name": {
+      "type": "string",
+      "metadata": {
+        "description": "Domain Controller 1 Name"
+      },
+      "defaultValue": "DC-01"
+    },
+    "dc2Name": {
+      "type": "string",
+      "metadata": {
+        "description": "Domain Controller 2 Name"
+      },
+      "defaultValue": "DC-02"
+    },
+    "dc1IpAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "Domain Controller 1 IP Address"
+      },
+      "defaultValue": "10.0.2.4"
+    },
+    "dc2IpAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "Domain Controller 2 IP Address"
+      },
+      "defaultValue": "10.0.2.5"
+    },
+    "dcVmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Domain Controller VM Size."
+      },
+      "defaultValue": "Standard_DS2_v2"
+    },
+    "useSingleResourceGroup": {
+      "type": "string",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "metadata": {
+        "description": "Whether or not use multiple resource groups, if using multiple, please change the resource groups manually in the variables section."
+      },
+      "defaultValue": "yes"
+    },
+    "sshKeyData": {
+      "type": "string",
+      "metadata": {
+        "description": "SSH rsa public key file as a string."
+      }
+    },
+    "activationCode": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Photoscan Activation Code."
+      }
+    },
+    "headServerName": {
+      "type": "string",
+      "defaultValue": "headnode",
+      "metadata": {
+        "description": "Photoscan Server (head) name."
+      }
+    },
+    "headRoot": {
+      "type": "string",
+      "metadata": {
+        "description": "Root path where the projects are located for Server."
+      }
+    },
+    "nodeNameSuffix": {
+      "type": "string",
+      "defaultValue": "workernode",
+      "metadata": {
+        "description": "Name suffix to be used in the GPU Nodes."
+      }
+    },
+    "nodeRoot": {
+      "type": "string",
+      "metadata": {
+        "description": "Root path where the projects are located for Nodes."
+      }
+    },
+    "nodeSubnetIpAddressSuffix": {
+      "type": "string",
+      "metadata": {
+        "description": "Nodes will have static Ip addresses, this is the network part of a class C subnet."
+      },
+      "defaultValue": "10.0.1"
+    },
+    "nodeStartIpAddress": {
+      "type": "int",
+      "defaultValue": 20,
+      "metadata": {
+        "description": "Nodes will have static Ip addresses, this is the start number of the host part of the class C ip address."
+      }
+    },
+    "dispatch": {
+      "type": "string",
+      "metadata": {
+        "description": "Ip address of the photoscan server (head)."
+      }
+    },
+    "gpuMask": {
+      "type": "int",
+      "metadata": {
+        "description": "Decimal represention of how many GPUs will be enabled for processing. E.g. 15 means 1111, that is equal to 4 GPUs."
+      }
+    },
+    "gpuNodesVmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "GPU VM Size."
+      }
+    },
+    "gpuNodesCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of GPU VM Nodes."
+      }
+    },
+    "headVmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Head node VM Size."
+      }
+    },
+    "beeGfsVnetRG": {
+      "type": "string",
+      "metadata": {
+        "description": "BeeGFS Vnet Resoure group name"
+      }
+    },
+    "beeGfsVnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "BeeGFS Virtual Network name"
+      }
+    },
+    "photoscanDownloadUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Photoscan binaries download URL"
+      }
+    },
+    "photoscanInstallPath": {
+      "type": "string",
+      "metadata": {
+        "description": "Photoscan installation path. Defaults to /"
+      },
+      "defaultValue": "/"
+    },
+    "beeGfsMasterName": {
+      "type": "string",
+      "metadata": {
+        "description": "BeeGFS Master node VM name (single label)"
+      }
+    },
+    "beeGfsMasterIpAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "BeeGFS Master Ip address"
+      }
+    },
+    "beeGfsMountPoint": {
+      "type": "string",
+      "metadata": {
+        "description": "Folder path where BeeGFS volume will be mounted"
+      },
+      "defaultValue": "/beegfs"
+    },
+    "beeGfsSmbServersVip": {
+      "type": "string",
+      "metadata": {
+        "description": "Ip Address of the BeeGFS SMB clients Load Balancer"
+      }
+    },
+    "beeGfsSmbServerARecordName": {
+      "type": "string",
+      "metadata": {
+        "description": "BeeGFS A record to be used by Photoscan Server (Head)."
+      }
+    },
+    "photoscanAbsolutePaths": {
+      "type": "int",
+      "defaultValue": 0,
+      "allowedValues": [
+        0,
+        1
+      ],
+      "metadata": {
+        "description": "Use Photoscan absolute paths. 0 = No, 1= Yes."
+      }
+    },
+    "windowsJumpboxVmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Windows Jumpbox VM Size."
+      },
+      "defaultValue": "Standard_DS2_v2"
+    },
+    "linuxJumpboxVmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Linux Jumpbox VM Size."
+      },
+      "defaultValue": "Standard_DS2_v2"
+    },
+    "windowsJumpboxVmName":{
+      "type": "string",
+      "metadata": {
+        "description": "Windows Jumpbox VM Name."
+      },
+      "defaultValue": "wjb-01"
+    },
+    "linuxJumpboxVmName":{
+      "type": "string",
+      "metadata": {
+        "description": "Linux Jumpbox VM Name."
+      },
+      "defaultValue": "ljb-01"
+    },
+    "windowsJumpboxIpAddress":{
+      "type": "string",
+      "metadata": {
+        "description": "Windows Jumpbox VM Ip Address."
+      },
+      "defaultValue":"10.0.0.4"
+    },
+    "linuxJumpboxIpAddress":{
+      "type": "string",
+      "metadata": {
+        "description": "Windows Jumpbox VM Ip Address."
+      },
+      "defaultValue":"10.0.0.5"
+    },
+    "beegfsHpcUserHomeFolder": {
+      "type": "string",
+      "metadata": {
+        "description": "This indicates beegfs mount point on master and storage+meta nodes for the hpcuser home folder, mounted on all nodes."
+      }
+    },
+    "hpcUser": {
+      "type": "string",
+      "metadata": {
+        "description": "Hpc user that will be owner of all files in the hpc folder structure."
+      }
+    },
+    "hpcUid": {
+      "type": "int",
+      "metadata": {
+        "description": "Hpc User ID."
+      }
+    },
+    "hpcGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Hpc Group."
+      }
+    },
+    "hpcGid": {
+      "type": "int",
+      "metadata": {
+        "description": "Hpc Group ID."
+      }
+    }
+  },
+  "variables": {
+    "baseUrl": "[parameters('_artifactsLocation')]",
+    "libraryBaseUrl": "[parameters('_artifactsLocation')]",
+    "deploymentUniqueString": "[uniqueString(concat(deployment().name,resourceGroup().id))]",
+    "deploymentConfig": {
+      "libraryBaseUrl": "[variables('libraryBaseUrl')]",
+      "sasToken": "[parameters('_artifactsLocationSasToken')]",
+      "libraryItems": {
+        "getRefUri": "[concat(variables('libraryBaseUrl'),'/_library/other/getReference.json',parameters('_artifactsLocationSasToken'))]",
+        "updateVnetDnsUri": "[concat(variables('libraryBaseUrl'),'/_library/other/updateVnetDnsSettings.json',parameters('_artifactsLocationSasToken'))]",
+        "updateVmDnsUri": "[concat(variables('libraryBaseUrl'),'/_library/other/updateVmDnsSettings.json',parameters('_artifactsLocationSasToken'))]",
+        "changeVmPrivateIpAddressTypeUri": "[concat(variables('libraryBaseUrl'),'/_library/other/changeVmIpAddressType.json',parameters('_artifactsLocationSasToken'))]",
+        "avSetBuildingBlockUri": "[concat(variables('libraryBaseUrl'),'/_library/Microsoft.Compute/availabilitySet.json',parameters('_artifactsLocationSasToken'))]",
+        "vmBuildingBlockUri": "[concat(variables('libraryBaseUrl'),'/_library/Microsoft.Compute/virtualMachine.json',parameters('_artifactsLocationSasToken'))]",
+        "vmLinuxBuildingBlockUri": "[concat(variables('libraryBaseUrl'),'/_library/Microsoft.Compute/virtualMachineLinux.json',parameters('_artifactsLocationSasToken'))]",
+        "vmExtensionBuildingBlockUri": "[concat(variables('libraryBaseUrl'),'/_library/Microsoft.Compute/vmExtension.json',parameters('_artifactsLocationSasToken'))]",
+        "vNetBuildingBlockUri": "[concat(variables('libraryBaseUrl'),'/_library/Microsoft.Network/virtualNetwork.json',parameters('_artifactsLocationSasToken'))]",
+        "nicBuildingBlockUri": "[concat(variables('libraryBaseUrl'),'/_library/Microsoft.Network/networkInterface.json',parameters('_artifactsLocationSasToken'))]",
+        "nsgBuildingBlockUri": "[concat(variables('libraryBaseUrl'),'/_library/Microsoft.Network/networkSecurityGroup.json',parameters('_artifactsLocationSasToken'))]",
+        "publicIpAddressBuildingBlockUri": "[concat(variables('libraryBaseUrl'),'/_library/Microsoft.Network/publicIp.json',parameters('_artifactsLocationSasToken'))]",
+        "lbBuildingBlockUri": "[concat(variables('libraryBaseUrl'),'/_library/Microsoft.Network/loadBalancer.json',parameters('_artifactsLocationSasToken'))]",
+        "vpnGatewayBuildingBlockUri": "[concat(variables('libraryBaseUrl'),'/_library/Microsoft.Network/vpnGateway.json',parameters('_artifactsLocationSasToken'))]",
+        "s2sConnectionBuildingBlockUri": "[concat(variables('libraryBaseUrl'),'/_library/Microsoft.Network/vnet2VnetConnection.json',parameters('_artifactsLocationSasToken'))]",
+        "joinVmToDomainUri": "[concat(variables('libraryBaseUrl'),'/_library/other/joinVmToDomain.json',parameters('_artifactsLocationSasToken'))]",
+        "applicationGatewayUri": "[concat(variables('libraryBaseUrl'),'/_library/Microsoft.Network/applicationGateway.json',parameters('_artifactsLocationSasToken'))]"
+      },
+      "apiVersions": {
+        "nicApiVersion": "2017-06-01",
+        "deploymentApiVersion": "2017-05-10",
+        "vmApiVersion": "2017-03-30",
+        "publicIpApiVersion": "2017-11-01",
+        "vnetApiVersion": "2018-07-01",
+        "nsgApiVersion": "2017-06-01",
+        "vmExtensionApiVersion": "2015-06-15",
+        "subnetApiVersion": "2017-10-01",
+        "applicationGwApiVersion": "2017-10-01",
+        "availabilitySetApiVersion": "2017-03-30",
+        "vnetPeeringApiVersion": "2016-06-01"
+      }
+    },
+    "networkingUrl": "[concat(variables('baseUrl'),'/common/networking.json',parameters('_artifactsLocationSasToken'))]",
+    "jumpBoxUrl": "[concat(variables('baseUrl'),'/common/jumpbox.json',parameters('_artifactsLocationSasToken'))]",
+    "activeDirectoryUrl": "[concat(variables('baseUrl'),'/common/activeDirectory.json',parameters('_artifactsLocationSasToken'))]",
+    "photoscanHeadUrl": "[concat(variables('baseUrl'),'/photoscanHead.json',parameters('_artifactsLocationSasToken'))]",
+    "photoscanNodesUrl": "[concat(variables('baseUrl'),'/photoscanNodes.json',parameters('_artifactsLocationSasToken'))]",
+    "useBeeGfsStorageUrl": "[concat(variables('baseUrl'),'/useBeeGfsStorage.json',parameters('_artifactsLocationSasToken'))]",
+    "dnsDomainName": "sofs.local",
+    "adDomainNetBIOSName": "sofs",
+    "resourceGroups": {
+      "networkingRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'),resourceGroup().Name, 'sofs-rg02')]",
+      "jumpBoxRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'sofs-rg02')]",
+      "sofsRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'sofs-rg02')]",
+      "adRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'sofs-rg02')]",
+      "clientsRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'sofs-rg02')]"
+    }
+  },
+  "resources": [
+    {
+      "condition": true,
+      "comments": "Virtual network deployment",
+      "name": "[concat(variables('deploymentUniqueString'),'-Networking')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('deploymentConfig').apiVersions.deploymentApiVersion]",
+      "resourceGroup": "[variables('resourceGroups').networkingRg]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('networkingUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "deploymentConfig": {
+            "value": "[variables('deploymentConfig')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vnetName": {
+            "value": "[parameters('vnetName')]"
+          },
+          "vnetAdressSpace": {
+            "value": "[parameters('vnetAdressSpace')]"
+          },
+          "jumpboxSubnetName": {
+            "value": "[parameters('jumpboxSubnetName')]"
+          },
+          "jumpboxSubnetAdressPrefix": {
+            "value": "[parameters('jumpboxSubnetAdressPrefix')]"
+          },
+          "photoscanSubnetName": {
+            "value": "[parameters('photoscanSubnetName')]"
+          },
+          "photoscanSubnetAdressPrefix": {
+            "value": "[parameters('photoscanSubnetAdressPrefix')]"
+          },
+          "adSubnetName": {
+            "value": "[parameters('adSubnetName')]"
+          },
+          "adSubnetAdressPrefix": {
+            "value": "[parameters('adSubnetAdressPrefix')]"
+          }
+        }
+      }
+    },
+    {
+      "condition": true,
+      "comments": "Active Directory Forest Deployment",
+      "name": "[concat(variables('deploymentUniqueString'),'-AD')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('deploymentConfig').apiVersions.deploymentApiVersion]",
+      "resourceGroup": "[variables('resourceGroups').adRg]",
+      "dependsOn": [
+        "[concat(variables('deploymentUniqueString'),'-Networking')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('activeDirectoryUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "deploymentConfig": {
+            "value": "[variables('deploymentConfig')]"
+          },
+          "vnetName": {
+            "value": "[parameters('vnetName')]"
+          },
+          "adSubnetName": {
+            "value": "[parameters('adSubnetName')]"
+          },
+          "dc1Name": {
+            "value": "[parameters('dc1Name')]"
+          },
+          "dc2Name": {
+            "value": "[parameters('dc2Name')]"
+          },
+          "dc1IpAddress": {
+            "value": "[parameters('dc1IpAddress')]"
+          },
+          "dc2IpAddress": {
+            "value": "[parameters('dc2IpAddress')]"
+          },
+          "dcVmSize": {
+            "value": "[parameters('dcVmSize')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "dnsDomainName": {
+            "value": "[variables('dnsDomainName')]"
+          },
+          "adDomainNetBIOSName": {
+            "value": "[variables('adDomainNetBIOSName')]"
+          },
+          "vnetRg": {
+            "value": "[variables('resourceGroups').networkingRg]"
+          },
+          "beeGfsSmbServersVip": {
+            "value": "[parameters('beeGfsSmbServersVip')]"
+          },
+          "beeGfsSmbServerARecordName": {
+            "value": "[parameters('beeGfsSmbServerARecordName')]"
+          },
+          "beeGfsMasterName": {
+            "value": "[parameters('beeGfsMasterName')]"
+          },
+          "beeGfsMasterIpAddress": {
+            "value": "[parameters('beeGfsMasterIpAddress')]"
+          }
+        }
+      }
+    },
+    {
+      "condition": true,
+      "comments": "Jump box Deployment",
+      "name": "[concat(variables('deploymentUniqueString'),'-Jumpbox')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('deploymentConfig').apiVersions.deploymentApiVersion]",
+      "resourceGroup": "[variables('resourceGroups').jumpBoxRg]",
+      "dependsOn": [
+        "[concat(variables('deploymentUniqueString'),'-AD')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('jumpBoxUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "deploymentConfig": {
+            "value": "[variables('deploymentConfig')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adDomainNetBIOSName": {
+            "value": "[variables('adDomainNetBIOSName')]"
+          },
+          "vnetName": {
+            "value": "[parameters('vnetName')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "vnetRg": {
+            "value": "[variables('resourceGroups').networkingRg]"
+          },
+          "sshKeyData": {
+            "value": "[parameters('sshKeyData')]"
+          },
+          "deployLinuxJumpbox": {
+            "value": "[parameters('deployLinuxJumpbox')]"
+          },
+          "windowsJumpboxVmName":{
+            "value":"[parameters('windowsJumpboxVmName')]"
+          },
+          "linuxJumpboxVmName":{
+            "value":"[parameters('linuxJumpboxVmName')]"
+          },
+          "windowsJumpboxVmSize": {
+            "value": "[parameters('windowsJumpboxVmSize')]"
+          },
+          "linuxJumpboxVmSize": {
+            "value": "[parameters('linuxJumpboxVmSize')]"
+          },
+          "windowsJumpboxIpAddress":{
+            "value":"[parameters('windowsJumpboxIpAddress')]"
+          },
+          "linuxJumpboxIpAddress":{
+            "value":"[parameters('linuxJumpboxIpAddress')]"
+          },
+          "jumpboxSubnetName":{
+            "value":"[parameters('jumpboxSubnetName')]"
+          }
+        }
+      }
+    },
+    {
+      "condition": true,
+      "comments": "Windows Photoscan Head Deployment",
+      "name": "[concat(variables('deploymentUniqueString'),'-Head')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('deploymentConfig').apiVersions.deploymentApiVersion]",
+      "resourceGroup": "[variables('resourceGroups').clientsRg]",
+      "dependsOn": [
+        "[concat(variables('deploymentUniqueString'),'-AD')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('photoscanHeadUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "deploymentConfig": {
+            "value": "[variables('deploymentConfig')]"
+          },
+          "vnetName": {
+            "value": "[parameters('vnetName')]"
+          },
+          "vnetRg": {
+            "value": "[variables('resourceGroups').networkingRg]"
+          },
+          "photoscanSubnetName":{
+            "value": "[parameters('photoscanSubnetName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "headServerName": {
+            "value": "[parameters('headServerName')]"
+          },
+          "dnsDomainName": {
+            "value": "[variables('dnsDomainName')]"
+          },
+          "adDomainNetBIOSName": {
+            "value": "[variables('adDomainNetBIOSName')]"
+          },
+          "activationCode": {
+            "value": "[parameters('activationCode')]"
+          },
+          "headRoot": {
+            "value": "[parameters('headRoot')]"
+          },
+          "dispatch": {
+            "value": "[parameters('dispatch')]"
+          },
+          "headVmSize": {
+            "value": "[parameters('headVmSize')]"
+          },
+          "photoscanAbsolutePaths": {
+            "value": "[parameters('photoscanAbsolutePaths')]"
+          }
+        }
+      }
+    },
+    {
+      "condition": true,
+      "comments": "Linux Photoscan Nodes Deployment",
+      "name": "[concat(variables('deploymentUniqueString'),'-nodes')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('deploymentConfig').apiVersions.deploymentApiVersion]",
+      "resourceGroup": "[variables('resourceGroups').clientsRg]",
+      "dependsOn": [
+        "[concat(variables('deploymentUniqueString'),'-AD')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('photoscanNodesUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "deploymentConfig": {
+            "value": "[variables('deploymentConfig')]"
+          },
+          "vnetName": {
+            "value": "[parameters('vnetName')]"
+          },
+          "vnetRg": {
+            "value": "[variables('resourceGroups').networkingRg]"
+          },
+          "photoscanSubnetName":{
+            "value": "[parameters('photoscanSubnetName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "dnsDomainName": {
+            "value": "[variables('dnsDomainName')]"
+          },
+          "sshKeyData": {
+            "value": "[parameters('sshKeyData')]"
+          },
+          "activationCode": {
+            "value": "[parameters('activationCode')]"
+          },
+          "nodeNameSuffix": {
+            "value": "[parameters('nodeNameSuffix')]"
+          },
+          "nodeRoot": {
+            "value": "[parameters('nodeRoot')]"
+          },
+          "nodeSubnetIpAddressSuffix":{
+            "value": "[parameters('nodeSubnetIpAddressSuffix')]" 
+          },
+          "nodeStartIpAddress":{
+            "value": "[parameters('nodeStartIpAddress')]"
+          },
+          "dispatch": {
+            "value": "[parameters('dispatch')]"
+          },
+          "gpuMask": {
+            "value": "[parameters('gpuMask')]"
+          },
+          "gpuNodesCount": {
+            "value": "[parameters('gpuNodesCount')]"
+          },
+          "gpuNodesVmSize": {
+            "value": "[parameters('gpuNodesVmSize')]"
+          },
+          "photoscanDownloadUrl": {
+            "value": "[parameters('photoscanDownloadUrl')]"
+          },
+          "photoscanInstallPath": {
+            "value": "[parameters('photoscanInstallPath')]"
+          },
+          "photoscanAbsolutePaths": {
+            "value": "[parameters('photoscanAbsolutePaths')]"
+          }
+          
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('useBeeGfsStorage'),'yes')]",
+      "comments": "Configure Linux Nodes to use BeeGFS",
+      "name": "[concat(variables('deploymentUniqueString'),'-nodes-attach-BeeGFS')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('deploymentConfig').apiVersions.deploymentApiVersion]",
+      "resourceGroup": "[variables('resourceGroups').clientsRg]",
+      "dependsOn": [
+        "[concat(variables('deploymentUniqueString'),'-nodes')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('useBeeGfsStorageUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "nodeNameSuffix": {
+            "value": "[parameters('nodeNameSuffix')]"
+          },
+          "gpuNodesCount": {
+            "value": "[parameters('gpuNodesCount')]"
+          },
+          "dnsDomainName": {
+            "value": "[variables('dnsDomainName')]"
+          },
+          "deploymentConfig": {
+            "value": "[variables('deploymentConfig')]"
+          },
+          "vnetName": {
+            "value": "[parameters('vnetName')]"
+          },
+          "vnetRg": {
+            "value": "[variables('resourceGroups').networkingRg]"
+          },
+          "beeGfsVnetRG": {
+            "value": "[parameters('beeGfsVnetRG')]"
+          },
+          "beeGfsVnetName": {
+            "value": "[parameters('beeGfsVnetName')]"
+          },
+          "beeGfsMasterName": {
+            "value": "[parameters('beeGfsMasterName')]"
+          },
+          "beeGfsMountPoint": {
+            "value": "[parameters('beeGfsMountPoint')]"
+          },
+          "beegfsHpcUserHomeFolder": {
+            "value": "[parameters('beegfsHpcUserHomeFolder')]"
+          },
+          "hpcUser": {
+            "value": "[parameters('hpcUser')]"
+          },
+          "hpcUid": {
+            "value": "[parameters('hpcUid')]"
+          },
+          "hpcGroup": {
+            "value": "[parameters('hpcGroup')]"
+          },
+          "hpcGid": {
+            "value": "[parameters('hpcGid')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

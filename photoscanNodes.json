@@ -1,0 +1,350 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location where the resources of this template will be deployed to"
+      },
+      "defaultValue": "eastus"
+    },
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network name"
+      }
+    },
+    "dnsDomainName": {
+      "type": "string",
+      "defaultValue": "sofstest.local",
+      "metadata": {
+        "description": "DNS domain name use to build the host's FQDN."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of admin account of the VMs, this name cannot be well know names, like root, admin, administrator, guest, etc."
+      }
+    },
+    "vnetRG": {
+      "type": "string",
+      "metadata": {
+        "description": "Resoure group name where the virtual network is located."
+      }
+    },
+    "photoscanSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet where Photoscan servers will be deployed to"
+      },
+      "defaultValue": "Photoscan-SN"
+    },
+    "deploymentConfig": {
+      "type": "object",
+      "metadata": {
+        "description": "Object that contains library paths, api versions, SAS token, from master template."
+      }
+    },
+    "sshKeyData": {
+      "type": "string",
+      "metadata": {
+        "description": "SSH rsa public key file as a string."
+      }
+    },
+    "activationCode": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Photoscan Activation Code."
+      }
+    },
+    "nodeNameSuffix": {
+      "type": "string",
+      "defaultValue": "workernode",
+      "metadata": {
+        "description": "Name suffix to be used in the GPU Nodes."
+      }
+    },
+    "nodeRoot": {
+      "type": "string",
+      "metadata": {
+        "description": "Root path where the projects are located."
+      }
+    },
+    "nodeSubnetIpAddressSuffix": {
+      "type": "string",
+      "metadata": {
+        "description": "Nodes will have static Ip addresses, this is the network part of a class C subnet."
+      }
+    },
+    "nodeStartIpAddress": {
+      "type": "int",
+      "defaultValue": 20,
+      "metadata": {
+        "description": "Nodes will have static Ip addresses, this is the start number of the host part of the class C ip address."
+      }
+    },
+    "dispatch": {
+      "type": "string",
+      "metadata": {
+        "description": "Ip address of the photoscan server (head)."
+      }
+    },
+    "gpuMask": {
+      "type": "int",
+      "metadata": {
+        "description": "Decimal represention of how many GPUs will be enabled for processing. E.g. 15 means 1111, that is equal to 4 GPUs."
+      }
+    },
+    "gpuNodesVmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "GPU VM Size."
+      }
+    },
+    "gpuNodesCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of GPU VM Nodes."
+      }
+    },
+    "photoscanDownloadUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Photoscan binaries download URL"
+      }
+    },
+    "photoscanInstallPath": {
+      "type": "string",
+      "metadata": {
+        "description": "Photoscan installation path. Defaults to /"
+      },
+      "defaultValue": "/"
+    },
+    "photoscanAbsolutePaths":{
+      "type":"int",
+      "defaultValue": 0,
+      "allowedValues": [
+        0,
+        1
+      ],
+      "metadata": {
+        "description": "Use Photoscan absolute paths. 0 = No, 1 = Yes."
+      }
+    }
+  },
+  "variables": {
+    "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
+    "vnetId": "[resourceId(parameters('vnetRg'),'Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
+    "subnetId": "[concat(variables('vnetId'),'/subnets/',parameters('photoscanSubnetName'))]",
+    "installParams": "[concat(parameters('activationCode'),' ',parameters('photoscanDownloadUrl'),' ',parameters('dispatch'),' ',parameters('nodeRoot'),' ',parameters('gpuMask'),' ',parameters('photoscanInstallPath'),' ',parameters('photoscanAbsolutePaths'))]",
+    "avSetInfo": [
+      {
+        "availabilitySetName": "GpuNodes-AvSet",
+        "managedDisksAligned": "yes"
+      }
+    ],
+    "faultDomains": 2,
+    "updateDomains": 5,
+    "managedDisksAligned": "yes",
+    "gpuNodesVMsList": {
+      "copy": [
+        {
+          "name": "items",
+          "count": "[parameters('gpuNodesCount')]",
+          "input": {
+            "name": "[concat(parameters('nodeNameSuffix'),'-',copyIndex('items',1))]",
+            "storageAccountType": "Premium_LRS",
+            "osDiskSizeGB": 128,
+            "subnetId": "[variables('subnetId')]",
+            "vmSize": "[parameters('gpuNodesVmSize')]",
+            "privateIpAddress": "[concat(parameters('nodeSubnetIpAddressSuffix'),'.',add(copyIndex('items',1),parameters('nodeStartIpAddress')))]",
+            "availabilitySetId": "[resourceId('Microsoft.Compute/availabilitySets',variables('avSetInfo')[0].availabilitySetName)]",
+            "imageInfo": {
+              "publisher": "OpenLogic",
+              "offer": "CentOS",
+              "sku": "7.5",
+              "version": "latest"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "resources": [
+    {
+      "condition": true,
+      "comments": "Availability Sets",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('avSetInfo')[copyIndex()].availabilitySetName]",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.availabilitySetApiVersion]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "avSetCopy",
+        "count": "[length(variables('avSetInfo'))]"
+      },
+      "properties": {
+        "platformFaultDomainCount": "[variables('faultDomains')]",
+        "platformUpdateDomainCount": "[variables('updateDomains')]"
+      },
+      "sku": {
+        "name": "[if(equals(variables('managedDisksAligned'),'yes'),'Aligned','Classic')]"
+      }
+    },
+    {
+      "condition": true,
+      "comments": "Linux VMs Network Interfaces",
+      "name": "[concat(variables('gpuNodesVMsList').items[copyIndex()].name,'-NIC')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[parameters('location')]",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.nicApiVersion]",
+      "copy": {
+        "name": "nodesNicCopy",
+        "count": "[length(variables('gpuNodesVMsList').items)]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIPAddress": "[variables('gpuNodesVMsList').items[copyIndex()].privateIpAddress]",
+              "subnet": {
+                "id": "[variables('gpuNodesVMsList').items[copyIndex()].subnetId]"
+              }
+            }
+          }
+        ],
+        "enableAcceleratedNetworking": false,
+        "primary": true
+      }
+    },
+    {
+      "condition": true,
+      "comments": "Deploying Linux Nodes virtual machines",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.vmApiVersion]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('gpuNodesVMsList').items[copyIndex()].name]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "nodesNicCopy",
+        "avSetCopy"
+      ],
+      "copy": {
+        "name": "nodesVMCopy",
+        "count": "[length(variables('gpuNodesVMsList').items)]"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('gpuNodesVMsList').items[copyIndex()].vmSize]"
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('gpuNodesVMsList').items[copyIndex()].name,'.',parameters('dnsDomainName'))]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[variables('sshKeyPath')]",
+                  "keyData": "[parameters('sshKeyData')]"
+                }
+              ]
+            }
+          }
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('gpuNodesVMsList').items[copyIndex()].imageInfo.publisher]",
+            "offer": "[variables('gpuNodesVMsList').items[copyIndex()].imageInfo.offer]",
+            "sku": "[variables('gpuNodesVMsList').items[copyIndex()].imageInfo.sku]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('gpuNodesVMsList').items[copyIndex()].name,'-',copyIndex(1),'-osdisk')]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage",
+            "managedDisk": {
+              "storageAccountType": "[variables('gpuNodesVMsList').items[copyIndex()].storageAccountType]"
+            },
+            "diskSizeGB": "[variables('gpuNodesVMsList').items[copyIndex()].osDiskSizeGB]"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('gpuNodesVMsList').items[copyIndex()].name,'-NIC'))]",
+              "properties": {
+                "primary": true
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "condition": true,
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('gpuNodesVMsList').items[copyIndex()].name,'/NvidiaGpuDriverLinux')]",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "nodesVMCopy"
+      ],
+      "copy": {
+        "name": "nvidiadriversCopy",
+        "count": "[length(variables('gpuNodesVMsList').items)]"
+      },
+      "properties": {
+        "publisher": "Microsoft.HpcCompute",
+        "type": "NvidiaGpuDriverLinux",
+        "typeHandlerVersion": 1.1,
+        "autoUpgradeMinorVersion": true,
+        "settings": {}
+      }
+    },
+    {
+      "condition": true,
+      "comments": "CustomScript extension execution to setup photoscan on GPU Nodes",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('gpuNodesVMsList').items[copyIndex()].name,'/CustomScript')]",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "nvidiadriversCopy"
+      ],
+      "copy": {
+        "name": "vmLinuxCustomScriptCopy",
+        "count": "[length(variables('gpuNodesVMsList').items)]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('_artifactsLocation'), '/scripts/install_photoscan_node.sh', parameters('_artifactsLocationSasToken'))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('bash install_photoscan_node.sh ', variables('installParams'))]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

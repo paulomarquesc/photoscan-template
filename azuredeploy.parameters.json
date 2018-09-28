@@ -1,0 +1,153 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sshKeyData": {
+      "value": ""
+    },
+    "adminUsername":{
+      "value": ""
+    },
+    "vnetName":{
+      "value": "photoscan-vnet"
+    },
+    "vnetAdressSpace":{
+      "value":"10.0.0.0/16"
+    },
+    "jumpboxSubnetName": {
+        "value":"JumpBox-SN"
+      },
+    "jumpboxSubnetAdressPrefix": {
+      "value":"10.0.0.0/24"
+    },
+    "photoscanSubnetName": {
+      "value":"Photoscan-SN"
+    },
+    "photoscanSubnetAdressPrefix": {
+      "value":"10.0.1.0/24"
+    },
+    "adSubnetName": {
+      "value":"AD-SN"
+    },
+    "adSubnetAdressPrefix": {
+      "value":"10.0.2.0/24"
+    },
+    "deployLinuxJumpbox":{
+      "value":"yes"
+    },
+    "useBeeGfsStorage":{
+      "value":"yes"
+    },
+    "dc1Name": {
+      "value": "dc-01"
+    },
+    "dc2Name": {
+      "value": "dc-02"
+    },
+    "dc1IpAddress": {
+      "value":  "10.0.2.4"
+    },
+    "dc2IpAddress": {
+      "value":  "10.0.2.5"
+    },
+    "dcVmSize": {
+      "value": "Standard_DS2_v2"
+    },
+    "windowsJumpboxVmName":{
+      "value":"wjb-01"
+    },
+    "linuxJumpboxVmName":{
+      "value":"ljb-01"
+    },
+    "windowsJumpboxVmSize": {
+      "value": "Standard_DS2_v2"
+    },
+    "linuxJumpboxVmSize": {
+      "value": "Standard_DS2_v2"
+    },
+    "windowsJumpboxIpAddress":{
+      "value":"10.0.0.4"
+    },
+    "linuxJumpboxIpAddress":{
+      "value":"10.0.0.5"
+    },
+    "headRoot": {
+      "value": "\\\\beegfs\\beegfsshare\\Projects"
+    },
+    "headServerName":{
+      "value":"headnode"
+    },
+    "headVmSize": {
+      "value": "Standard_D4S_v3"
+    },
+    "nodeNameSuffix":{
+      "value": "gpunode"
+    },
+    "nodeRoot": {
+      "value": "/beegfs/beegfsshare/Projects"
+    },
+    "nodeSubnetIpAddressSuffix":{
+      "value": "10.0.1" 
+    },
+    "nodeStartIpAddress":{
+      "value":20
+    },
+    "dispatch": {
+      "value": "10.0.1.250"
+    },
+    "gpuMask": {
+      "value": 15
+    },
+    "gpuNodesCount": {
+      "value": 2
+    },
+    "gpuNodesVmSize": {
+      "value": "Standard_NC6s_v2"
+    },
+    "beeGfsVnetRG": {
+      "value": "beegfs-rg-eus"
+    },
+    "beeGfsVnetName": {
+      "value": "beegfs-vnet"
+    },
+    "photoscanDownloadUrl": {
+      "value": "http://download.agisoft.com/photoscan-pro_1_4_4_amd64.tar.gz"
+    },
+    "photoscanInstallPath": {
+      "value": "/"
+    },
+    "beeGfsMasterName": {
+      "value": "beegfsmaster"
+    },
+    "beeGfsMasterIpAddress": {
+      "value": "192.168.0.4"
+    },
+    "beeGfsMountPoint": {
+      "value": "/beegfs"
+    },
+    "beeGfsSmbServersVip": {
+      "value":"192.168.0.13"
+    },
+    "beeGfsSmbServerARecordName":{
+      "value":"beegfs"
+    },
+    "photoscanAbsolutePaths":{
+      "value":0
+    },
+    "beegfsHpcUserHomeFolder": {
+      "value": "/mnt/beegfshome"
+    },
+    "hpcUser": {
+      "value": "hpcuser"
+    },
+    "hpcUid": {
+      "value": 7007
+    },
+    "hpcGroup": {
+      "value": "hpcgroup"
+    },
+    "hpcGid": {
+      "value": 7007
+    }
+  }
+}

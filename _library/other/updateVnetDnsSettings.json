@@ -1,0 +1,110 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vnetApiVersion": {
+      "type": "string",
+      "defaultValue": "2017-03-30"
+    },
+    "deploymentApiVersion": {
+      "type": "string",
+      "defaultValue": "2017-05-10"
+    },
+    "deploymentUniqueString": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "sasToken": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "vnetId": {
+      "type": "string"
+    },
+    "dnsServers": {
+      "type": "array"
+    }
+  },
+  "variables": {
+    "vNetName": "[split(parameters('vnetId'),'/')[8]]",
+    "getRefSuffix": "[concat('getVnetRef',variables('vNetName'))]",
+    "getRefTemplateName": "getReference.json",
+    "getRefUrl": "[uri(deployment().properties.templateLink.uri, concat(variables('getRefTemplateName'),parameters('sasToken')))]",
+    "vnetTemplateName": "virtualNetwork.json",
+    "vnetBuildingBlockUrl": "[uri(replace(deployment().properties.templateLink.uri,'other','Microsoft.Network'), concat(variables('vnetTemplateName'),parameters('sasToken')))]"
+  },
+  "resources": [
+    {
+      "condition": true,
+      "comments": "Getting a reference for a vnet",
+      "name": "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[parameters('deploymentApiVersion')]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('getRefUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "deploymentUniqueString": {
+            "value": "[parameters('deploymentUniqueString')]"
+          },
+          "sasToken": {
+            "value": "[parameters('sasToken')]"
+          },
+          "resourceId": {
+            "value": "[parameters('vnetId')]"
+          },
+          "apiVersion": {
+            "value": "2017-06-01"
+          }
+        }
+      }
+    },
+    {
+      "condition": true,
+      "comments": "Updates a virtual network with DNS settings",
+      "name": "[concat(parameters('deploymentUniqueString'),'-vnetDnsUpdt-',variables('getRefSuffix'))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2017-05-10",
+      "dependsOn": [
+        "[concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('vnetBuildingBlockUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "apiVersion": {
+            "value": "[parameters('vnetApiVersion')]"
+          },
+          "deploymentUniqueString": {
+            "value": "[parameters('deploymentUniqueString')]"
+          },
+          "location": {
+            "value": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.location]"
+          },
+          "virtualNetworkName": {
+            "value": "[split(reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.resourceId,'/')[2]]"
+          },
+          "addressPrefixes": {
+            "value": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.addressSpace.addressPrefixes]"
+          },
+          "subnets": {
+            "value": "[reference(concat(parameters('deploymentUniqueString'),'-',variables('getRefSuffix'))).outputs.fullResourceObj.value.properties.subnets]"
+          },
+          "configureDnsServers": {
+            "value": "yes"
+          },
+          "dnsServers": {
+            "value": "[parameters('dnsServers')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

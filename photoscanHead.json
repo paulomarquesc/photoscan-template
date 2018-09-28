@@ -1,0 +1,285 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
+    },
+    "location": {
+      "type": "string",
+      "metadata": {
+        "description": "Location where the resources of this template will be deployed to"
+      },
+      "defaultValue": "eastus"
+    },
+    "vnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Virtual Network name"
+      },
+      "defaultValue": "sofs-Vnet"
+    },
+    "dnsDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS domain name use to build the host's FQDN."
+      }
+    },
+    "adDomainNetBIOSName": {
+      "type": "string",
+      "metadata": {
+        "description": "NetBIOS domain name for Active Directory deployment."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of admin account of the VMs, this name cannot be well know names, like root, admin, administrator, guest, etc."
+      }
+    },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Domain Administrator password"
+      }
+    },
+    "vnetRG": {
+      "type": "string",
+      "metadata": {
+        "description": "Resoure group name where the virtual network is located."
+      }
+    },
+    "photoscanSubnetName": {
+      "type": "string",
+      "metadata": {
+        "description": "Subnet where Photoscan servers will be deployed to"
+      },
+      "defaultValue": "Photoscan-SN"
+    },
+    "deploymentConfig": {
+      "type": "object",
+      "metadata": {
+        "description": "Object that contains library paths, api versions, SAS token, from master template."
+      }
+    },
+    "activationCode": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Photoscan Activation Code."
+      }
+    },
+    "headRoot": {
+      "type": "string",
+      "metadata": {
+        "description": "Root path where the projects are located."
+      }
+    },
+    "dispatch": {
+      "type": "string",
+      "metadata": {
+        "description": "Ip address of the photoscan server (head)."
+      }
+    },
+    "headVmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Head node VM Size."
+      }
+    },
+    "headServerName": {
+      "type": "string",
+      "defaultValue": "headnode",
+      "metadata": {
+        "description": "Photoscan Server (head) name."
+      }
+    },
+    "photoscanAbsolutePaths": {
+      "type": "int",
+      "defaultValue": 0,
+      "allowedValues": [
+        0,
+        1
+      ],
+      "metadata": {
+        "description": "Use Photoscan absolute paths. 0 = No, 1= Yes."
+      }
+    }
+  },
+  "variables": {
+    "deploymentUniqueString": "[uniqueString(concat(deployment().name,resourceGroup().id))]",
+    "vnetId": "[resourceId(parameters('vnetRg'),'Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
+    "subnetId": "[concat(variables('vnetId'),'/subnets/',parameters('photoscanSubnetName'))]",
+    "photoScanRole": "Server",
+    "installParams": "[concat(' -ActivationCode ', parameters('activationCode'), ' -Role ', variables('photoScanRole'), ' -Dispatch ', variables('head').privateIpAddress, ' -Control ',  variables('head').privateIpAddress, ' -Root ', parameters('headRoot'), ' -AbsolutePaths ', parameters('photoscanAbsolutePaths'))]",
+    "head": {
+      "name": "[parameters('headServerName')]",
+      "storageAccountType": "Premium_LRS",
+      "subnetId": "[variables('subnetId')]",
+      "vmSize": "[parameters('headVmSize')]",
+      "privateIpAddress": "[parameters('dispatch')]",
+      "imageInfo": {
+        "publisher": "MicrosoftWindowsServer",
+        "offer": "WindowsServer",
+        "sku": "2016-Datacenter",
+        "version": "latest"
+      }
+    }
+  },
+  "resources": [
+    {
+      "condition": true,
+      "comments": "Head Node deployment",
+      "name": "[concat(variables('deploymentUniqueString'),'-',variables('head').name)]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.deploymentApiVersion]",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[parameters('deploymentConfig').libraryItems.vmBuildingBlockUri]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "deploymentUniqueString": {
+            "value": "[variables('deploymentUniqueString')]"
+          },
+          "nicApiVersion": {
+            "value": "[parameters('deploymentConfig').apiVersions.nicApiVersion]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "completeVmNameProvided": {
+            "value": "yes"
+          },
+          "vmNamePrefix": {
+            "value": "[variables('head').name]"
+          },
+          "vmSize": {
+            "value": "[variables('head').vmSize]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "imageInfo": {
+            "value": "[variables('head').imageInfo]"
+          },
+          "sasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "attachDataDisks": {
+            "value": "no"
+          },
+          "storageAccountType": {
+            "value": "[variables('head').storageAccountType]"
+          },
+          "useAvailabilitySet": {
+            "value": "no"
+          },
+          "subnetId": {
+            "value": "[variables('head').subnetId]"
+          },
+          "enableAcceleratedNetworking": {
+            "value": true
+          },
+          "usePublicIpAddress": {
+            "value": "no"
+          },
+          "includeVmInAppGwBe": {
+            "value": "no"
+          },
+          "attachNsg": {
+            "value": "no"
+          },
+          "configureDnsServers": {
+            "value": "no"
+          },
+          "privateIpAddressType": {
+            "value": "Static"
+          },
+          "privateIpAddress": {
+            "value": "[variables('head').privateIpAddress]"
+          },
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "usePlan": {
+            "value": "no"
+          }
+        }
+      }
+    },
+    {
+      "condition": true,
+      "comments": "DOMAIN JOIN - Head - Domain joining VMs",
+      "name": "[concat(variables('deploymentUniqueString'),'domainJoinGpuVm','-',variables('head').name)]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.deploymentApiVersion]",
+      "resourceGroup": "[resourceGroup().name]",
+      "dependsOn": [
+        "[concat(variables('deploymentUniqueString'),'-',variables('head').name)]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[parameters('deploymentConfig').libraryItems.joinVmToDomainUri]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "apiVersion": {
+            "value": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vmList": {
+            "value": "[variables('head').name]"
+          },
+          "domainJoinUserName": {
+            "value": "[concat(parameters('adDomainNetBIOSName'),'\\',parameters('adminUsername'))]"
+          },
+          "domainJoinUserPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "domainFQDN": {
+            "value": "[parameters('dnsDomainName')]"
+          }
+        }
+      }
+    },
+    {
+      "condition": true,
+      "comments": "Configure Photoscan on Server",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('head').name,'/CustomScript')]",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat(variables('deploymentUniqueString'),'domainJoinGpuVm','-',variables('head').name)]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.9",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('_artifactsLocation'),'/scripts/install_photoscan_head.ps1', parameters('_artifactsLocationSasToken'))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ./scripts/install_photoscan_head.ps1',' ', variables('installParams'))]"
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

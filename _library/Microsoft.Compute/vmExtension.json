@@ -1,0 +1,105 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "apiVersion": {
+      "type": "string",
+      "defaultValue": "2015-06-15"
+    },
+    "location": {
+      "type": "string"
+    },
+    "vmName": {
+      "type": "string"
+    },
+    "sasToken": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "extensionFriendlyName": {
+      "type": "string"
+    },
+    "extensionType": {
+      "type": "string",
+      "allowedValues": [
+        "dsc",
+        "customScriptExtension",
+        "linuxCustomScriptExtension"
+      ]
+    },
+    "dscTypeHandlerVersion": {
+      "type": "string",
+      "defaultValue": "2.73"
+    },
+    "customScriptExtensionTypeHandlerVersion": {
+      "type": "string",
+      "defaultValue": "1.9"
+    },
+    "linuxCustomScriptExtensionTypeHandlerVersion": {
+      "type": "string",
+      "defaultValue": "2.0"
+    },
+    "settings": {
+      "type": "object"
+    },
+    "protectedSettings": {
+      "type": "object",
+      "defaultValue": {}
+    },
+    "autoUpgradeMinorVersion": {
+      "type": "bool",
+      "defaultValue": true
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+      "condition": "[equals(parameters('extensionType'),'dsc')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[if(equals(parameters('extensionType'),'dsc'),concat(parameters('vmName'),'/',parameters('extensionFriendlyName')),concat(parameters('vmName'),'/','invalid1'))]",
+      "apiVersion": "[parameters('apiVersion')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Powershell",
+        "type": "DSC",
+        "typeHandlerVersion": "[parameters('dscTypeHandlerVersion')]",
+        "autoUpgradeMinorVersion": "[parameters('autoUpgradeMinorVersion')]",
+        "settings": "[parameters('settings')]",
+        "protectedSettings": "[if(equals(parameters('protectedSettings'),json('null')),json('null'),parameters('protectedSettings'))]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('extensionType'),'customScriptExtension')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[if(equals(parameters('extensionType'),'customScriptExtension'),concat(parameters('vmName'),'/',parameters('extensionFriendlyName')),concat(parameters('vmName'),'/','invalid2'))]",
+      "apiVersion": "[parameters('apiVersion')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "[parameters('customScriptExtensionTypeHandlerVersion')]",
+        "autoUpgradeMinorVersion": "[parameters('autoUpgradeMinorVersion')]",
+        "settings": "[parameters('settings')]",
+        "protectedSettings": "[if(equals(parameters('protectedSettings'),json('null')),json('null'),parameters('protectedSettings'))]"
+      }
+    },
+    {
+      "condition": "[equals(parameters('extensionType'),'linuxCustomScriptExtension')]",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[if(equals(parameters('extensionType'),'linuxCustomScriptExtension'),concat(parameters('vmName'),'/',parameters('extensionFriendlyName')),concat(parameters('vmName'),'/','invalid3'))]",
+      "apiVersion": "[parameters('apiVersion')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "[parameters('linuxCustomScriptExtensionTypeHandlerVersion')]",
+        "autoUpgradeMinorVersion": "[parameters('autoUpgradeMinorVersion')]",
+        "settings": "[parameters('settings')]",
+        "protectedSettings": "[if(equals(parameters('protectedSettings'),json('null')),json('null'),parameters('protectedSettings'))]"
+      }
+    }
+  ],
+  "outputs": {
+  }
+}
