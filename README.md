@@ -10,12 +10,17 @@ This solution is break down into the following components, infrastructure items 
 A sample deployment script called Deploy-AzureResourceGroup.sh is provided with this solution and you can use it to help automate your deployment. This is a minimal sample command line example which creates staging storage account to hold all deployment related files:
 
 ```bash
-./Deploy-AzureResourceGroup.sh -g myResourceGroup -l eastus -t deploy-beegfs-master.json -p deploy-beegfs-master-parameters.json -r support-rg
+./Deploy-AzureResourceGroup.sh -g myResourceGroup -l eastus -r support-rg -v keyvaultname
 ```
 
 ## Prerequisites
-1. To get end to end automation, please deploy [this](https://github.com/paulomarquesc/beegfs-template) template first.
-1. Please make sure you review the parameter file before starting the deployment.
+1. An Azure Key Vault with the following secrets created
+    *  adminPassword - this will be your Domain Admin and Local Windows Administrators password
+    *  activationCode - this is the Photoscan activation code, make sure you have a valid code or request a trial at their web site.
+    
+2. To get end to end automation, please deploy this [BeeGFS](https://github.com/paulomarquesc/beegfs-template) template first.
+   
+3. Please make sure you review the parameter file before starting the deployment.
 
 ## Deployment Steps
 
@@ -40,7 +45,7 @@ A sample deployment script called Deploy-AzureResourceGroup.sh is provided with 
 1. If you have at least contributor rights at subscription level, please select which subscription you would like the initialization process to create a storage account and click "Create storage" button.
     ![image](./media/image4.png)
 
-2. You should see a command prompt like this one:
+1. You should see a command prompt like this one:
     ![image](./media/image5.png)
 
 
@@ -51,117 +56,82 @@ A sample deployment script called Deploy-AzureResourceGroup.sh is provided with 
    ```
 1. Clone this repository with the following git command
    ```bash
-   git clone https://github.com/paulomarquesc/beegfs-template.git
+   git clone https://github.com/paulomarquesc/photoscan-template.git
    ```
-1. Change folder to beegfs-template
+1. Change folder to photoscan-template
    ```bash
    cd beegfs-template
    ```
-1. Review and change all of these parameters files before deploying
-   *  deploy-beegfs-master-parameters.json
-   *  deploy-beegfs-nodes-parameters.json
-   *  deploy-clients-parameters.json
+1. Review and change the parameters files before deploying
+   *  azuredeploy.parameters.json
 
-2. Execute the deployment scripts for each of the templates (make sure you change command line arguments), it must be in this specific order
-    * deploy-beegfs-master.json
+1. Execute the deployment script the template (make sure you change command line arguments)
+    * azuredeploy.json
         ```bash
-        ./Deploy-AzureResourceGroup.sh -g beegfs-rg -l eastus -t deploy-beegfs-master.json -p deploy-beegfs-master-parameters.json -s storageaccountname -r storage-account-rg
+        ./Deploy-AzureResourceGroup.sh -g photoscan-rg -l eastus -s storageaccountname -r storage-account-rg -v mykeyvault
         ```
-    * deploy-beegfs-nodes.json
-        ```bash
-        ./Deploy-AzureResourceGroup.sh -g beegfs-rg -l eastus -t deploy-beegfs-nodes.json -p deploy-beegfs-nodes-parameters.json -s storageaccountname -r storage-account-rg
-        ```
-    * deploy-clients.json (this is optional, this is an example on how to have clients connected to BeeGFS and this is specifically useful to my other project were I had some Windows clients having to get access to the same data on BeeGFS as the Linux clients)
-        ```bash
-        ./Deploy-AzureResourceGroup.sh -g beegfs-rg -l eastus -t deploy-clients.json -p deploy-clients-parameters.json -s storageaccountname -r storage-account-rg
-        ```
-
-    > Note: inside devtools folder there is a simple script that ties all deployments together, you can copy it to the beegfs-template folder, change its values and execute one script for the whole environment.
-
+    
 ### List of parameters per template and their descriptions
-#### deploy-beegfs-master-parameters.json
+#### azuredeploy.parameters.json
 * **_artifactsLocation:** Auto-generated container in staging storage account to receive post-build staging folder upload.
 * **_artifactsLocationSasToken:** Auto-generated token to access _artifactsLocation.
 * **location:** Location where the resources of this template will be deployed to. Default Value: `eastus`
-* **dnsDomainName:** DNS domain name use to build the host's FQDN. If using this parameter, make sure that there is a DNS server serving the vnet before the BeeGFS servers gets deployed.
-* **beeGfsMasterVmName:** Management (master) BeeGfs VM name. Default Value: `beegfsmaster`
-* **VMSize:** sku to use for the storage nodes - only premium disks VMs are allowed. Default Value: `Standard_DS3_v2`
-* **VMImage:** VM Image. Default Value: `CentOS_7.5`
-* **vnetRG:** Resoure group name where the virtual network is located. Defaults to deployment Resource Group. Default Value: `none`
-* **vnetName:** Vnet name. Default Value: `beegfs-vnet`
-* **subnetName:** Subnet name where BeeGFS components will be deployed to. Default Value: `beegfs-subnet`
-* **addressPrefix:** Vnet IP Address Space. Default Value: `192.168.0.0/16`
-* **subnetPrefix:** Subnet ip address range. Default Value: `192.168.0.0/24`
-* **beeGfsMasterIpAddress:** BeeGFS Management(master) node Static Ip Address. Default Value: `192.168.0.4`
-* **adminUsername:** Admin username on all VMs.
-* **sshKeyData:** SSH rsa public key file as a string.
-* **beegfsShareName:** This indicates beegfs mount point on master and storage+meta nodes. Default Value: `192.168.0.4`
-* **beegfsHpcUserHomeFolder:** This indicates beegfs mount point on master and storage+meta nodes for the hpcuser home folder, mounted on all nodes. Default Value: `/mnt/beegfshome`
-* **hpcUser:** Hpc user that will be owner of all files in the hpc folder structure. Default Value: `hpcuser`
-* **hpcUid:** Hpc User ID. Default Value: `7007`
-* **hpcGroup:** Hpc Group. Default Value: `hpcgroup`
-* **hpcGid:** Hpc Group ID. Default Value: `7007`
-
-#### deploy-beegfs-nodes-parameters.json
-* **_artifactsLocation:** Auto-generated container in staging storage account to receive post-build staging folder upload.
-* **_artifactsLocationSasToken:** Auto-generated token to access _artifactsLocation.
-* **location:** Location where the resources of this template will be deployed to. Default Value: `westus2`
-* **vmssName:** OSS/MDS (Storage/Meta) VMSS name. Default Value: `beegfsserver`
-* **dnsDomainName:** DNS domain name use to build the host's FQDN.
-* **nodeType:** type of beegfs node to deploy. Default Value: `all`
-* **nodeCount:** Number of BeeGFS nodes (100 or less). Default Value: `1`
-* **VMSize:** sku to use for the storage nodes - only premium disks VMs are allowed. Default Value: `Standard_DS3_v2`
-* **VMImage:** VM Image. Default Value: `CentOS_7.5`
-* **vnetName:** Vnet name. Default Value: `beegfs-vnet`
-* **subnetName:** Subnet name. Default Value: `beegfs-subnet`
-* **adminUsername:** Admin username on all VMs.
-* **sshKeyData:** SSH rsa public key file as a string.
-* **storageDiskSize:** Premium storage disk size used for the storage services. Default Value: `P10`
-* **StorageDisksCount:** Number of storage disks. Default Value: `1`
-* **metaDiskSize:** Premium storage disk size used for the metadata services. Default Value: `P10`
-* **MetaDisksCount:** Number of metadata disks. Default Value: `1`
-* **volumeType:** Volume for data disks. Default Value: `RAID0`
-* **vnetRg:** Name of the RG of the virtual network which master server is using.
-* **masterName:** Name of master VM name. Default Value: `beegfsmaster`
-* **beeGfsMountPoint:** Shared BeeGFS data mount point, Smb Share (beeGfsSmbShareName) will be a subfolder under this mount point. Default Value: `/beegfs`
-* **beegfsHpcUserHomeFolder:** This indicates beegfs mount point on master and storage+meta nodes for the hpcuser home folder, mounted on all nodes. Default Value: `/mnt/beegfshome`
-* **hpcUser:** Hpc user that will be owner of all files in the hpc folder structure. Default Value: `hpcuser`
-* **hpcUid:** Hpc User ID. Default Value: `7007`
-* **hpcGroup:** Hpc Group. Default Value: `hpcgroup`
-* **hpcGid:** Hpc Group ID. Default Value: `7007`
-* **deployHaConfiguration:** BeeGFS HA Configuration Deployment. Default Value: `yes`
-
-#### deploy-clients-parameters.json
-* **_artifactsLocation:** Auto-generated container in staging storage account to receive post-build staging folder upload.
-* **_artifactsLocationSasToken:** Auto-generated token to access _artifactsLocation.
-* **location:** Location where the resources of this template will be deployed to. Default Value: `eastus`
-* **vnetRG:** Resoure group name where the virtual network is located.
-* **vnetName:** Name of the the Virtual Network where the subnet will be added. Default Value: `beegfs-vnet`
-* **subnetName:** Existing subnet name. Default Value: `beegfs-subnet`
-* **subnetIpAddressSuffix:** Clients will have static Ip addresses, this is the network part of a class C subnet. Default Value: `192.168.0`
-* **startIpAddress:** Clients will have static Ip addresses, this is the start number of the host part of the class C ip address. Default Value: `50`
-* **nodeCount:** Number of client nodes (100 or less). Default Value: `1`
-* **vmNameSuffix:** VM name suffix. Default Value: `beegfsclt`
-* **VMSize:** sku to use for the storage nodes - only premium disks VMs are allowed. Default Value: `Standard_DS3_v2`
-* **VMImage:** VM Image. Default Value: `CentOS_7.5`
-* **dnsDomainName:** DNS domain name use to build the host's FQDN.
+* **vnetName:** Virtual Network Name. Default Value: `Photoscan-vnet`
+* **vnetAdressSpace:** Virtual Network Address Space. Default Value: `10.0.0.0/16`
+* **jumpboxSubnetName:** Jumpbox subnet name. Default Value: `Jumpbox-SN`
+* **jumpboxSubnetAdressPrefix:** Jumpbox subnet address prefix. Default Value: `10.0.0.0/24`
+* **photoscanSubnetName:** Photoscan servers (Scheduler+Node) subnet name. Default Value: `Photoscan-SN`
+* **photoscanSubnetAdressPrefix:** Photoscan subnet address prefix. Default Value: `10.0.1.0/24`
+* **adSubnetName:** Subnet where Domain Controllers will be deployed to. Default Value: `AD-SN`
+* **adSubnetAdressPrefix:** AD subnet address prefix. Default Value: `10.0.2.0/24`
+* **deployLinuxJumpbox:** Should this template deploy a Linux Jumpbox. Default Value: `yes`
+* **useBeeGfsStorage:** Should this template use BeeGfs storage. Default Value: `yes`
 * **adminUsername:** Name of admin account of the VMs, this name cannot be well know names, like root, admin, administrator, guest, etc.
+* **adminPassword:** Admin password.
+* **dc1Name:** Domain Controller 1 Name. Default Value: `DC-01`
+* **dc2Name:** Domain Controller 2 Name. Default Value: `DC-02`
+* **dc1IpAddress:** Domain Controller 1 IP Address. Default Value: `10.0.2.4`
+* **dc2IpAddress:** Domain Controller 2 IP Address. Default Value: `10.0.2.5`
+* **dcVmSize:** Domain Controller VM Size. Default Value: `Standard_DS2_v2`
+* **useSingleResourceGroup:** Whether or not use multiple resource groups, if using multiple, please change the resource groups manually in the variables section. Default Value: `yes`
 * **sshKeyData:** SSH rsa public key file as a string.
-* **nodeType:** type of beegfs node to deploy. Default Value: `client`
-* **masterName:** Name of master VM name. Default Value: `beegfsmaster`
-* **sambaWorkgroupName:** Name of samba workgroup. Default Value: `WORKGROUP`
-* **beeGfsMountPoint:** Shared BeeGFS data mount point, Smb Share (beeGfsSmbShareName) will be a subfolder under this mount point. Default Value: `/beegfs`
-* **beeGfsSmbShareName:** Samba share name. It will be a subfolder as well under beeGfsMountPoint. Default Value: `beegfsshare`
-* **beegfsHpcUserHomeFolder:** This indicates beegfs mount point on master and storage+meta nodes for the hpcuser home folder, mounted on all nodes. Default Value: `/mnt/beegfshome`
-* **hpcUser:** Hpc user that will be owner of all files in the hpc folder structure. Default Value: `hpcuser`
-* **hpcUid:** Hpc User ID. Default Value: `7007`
-* **hpcGroup:** Hpc Group. Default Value: `hpcgroup`
-* **hpcGid:** Hpc Group ID. Default Value: `7007`
-* **smbVip:** SMB Clients Virtual Ip Address. Default Value: `192.168.0.55`
+* **activationCode:** Photoscan Activation Code.
+* **headServerName:** Photoscan Server (head) name. Default Value: `headnode`
+* **headRoot:** Root path where the projects are located for Server.
+* **nodeNameSuffix:** Name suffix to be used in the GPU Nodes. Default Value: `workernode`
+* **nodeRoot:** Root path where the projects are located for Nodes.
+* **nodeSubnetIpAddressSuffix:** Nodes will have static Ip addresses, this is the network part of a class C subnet. Default Value: `10.0.1`
+* **nodeStartIpAddress:** Nodes will have static Ip addresses, this is the start number of the host part of the class C ip address. Default Value: `20`
+* **dispatch:** Ip address of the photoscan server (head).
+* **gpuMask:** Decimal represention of how many GPUs will be enabled for processing. E.g. 15 means 1111, that is equal to 4 GPUs.
+* **gpuNodesVmSize:** GPU VM Size.
+* **gpuNodesCount:** Number of GPU VM Nodes.
+* **headVmSize:** Head node VM Size.
+* **beeGfsVnetRG:** BeeGFS Vnet Resoure group name.
+* **beeGfsVnetName:** BeeGFS Virtual Network name.
+* **photoscanDownloadUrl:** Photoscan binaries download URL.
+* **photoscanInstallPath:** Photoscan installation path. Defaults to /. Default Value: `/`
+* **beeGfsMasterName:** BeeGFS Master node VM name (single label).
+* **beeGfsMasterIpAddress:** BeeGFS Master Ip address.
+* **beeGfsMountPoint:** Folder path where BeeGFS volume will be mounted. Default Value: `/beegfs`
+* **beeGfsSmbServersVip:** Ip Address of the BeeGFS SMB clients Load Balancer.
+* **beeGfsSmbServerARecordName:** BeeGFS A record to be used by Photoscan Server (Head).
+* **photoscanAbsolutePaths:** Use Photoscan absolute paths. 0 = No, 1= Yes. Default Value: `0`
+* **windowsJumpboxVmSize:** Windows Jumpbox VM Size. Default Value: `Standard_DS2_v2`
+* **linuxJumpboxVmSize:** Linux Jumpbox VM Size. Default Value: `Standard_DS2_v2`
+* **windowsJumpboxVmName:** Windows Jumpbox VM Name. Default Value: `wjb-01`
+* **linuxJumpboxVmName:** Linux Jumpbox VM Name. Default Value: `ljb-01`
+* **windowsJumpboxIpAddress:** Windows Jumpbox VM Ip Address. Default Value: `10.0.0.4`
+* **linuxJumpboxIpAddress:** Windows Jumpbox VM Ip Address. Default Value: `10.0.0.5`
+* **beegfsHpcUserHomeFolder:** This indicates beegfs mount point on master and storage+meta nodes for the hpcuser home folder, mounted on all nodes.
+* **hpcUser:** Hpc user that will be owner of all files in the hpc folder structure.
+* **hpcUid:** Hpc User ID.
+* **hpcGroup:** Hpc Group.
+* **hpcGid:** Hpc Group ID.
 
 ## References
 BeeGFS - https://www.beegfs.io
 
-AzureCAT Parallel File System eBook - https://blogs.msdn.microsoft.com/azurecat/2018/06/11/azurecat-ebook-parallel-virtual-file-systems-on-microsoft-azure/
+BeeGFS Deployment Template - https://github.com/paulomarquesc/beegfs-template
 
-Original BeeGFS template from AzureCAT team - https://github.com/az-cat/HPC-Filesystems
+Agisoft Photoscan - http://www.agisoft.com/
