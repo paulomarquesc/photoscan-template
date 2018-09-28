@@ -60,7 +60,7 @@ A sample deployment script called Deploy-AzureResourceGroup.sh is provided with 
    ```
 1. Change folder to photoscan-template
    ```bash
-   cd beegfs-template
+   cd photoscan-template
    ```
 1. Review and change the parameters files before deploying
    *  azuredeploy.parameters.json
