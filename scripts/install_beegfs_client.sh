@@ -91,10 +91,13 @@ install_kernel_pkgs()
 install_pkgs()
 {
     sudo yum -y install epel-release
-	sudo yum -y install gcc gcc-c++
+	sudo yum -y install kernel-devel kernel-headers kernel-tools-libs-devel gcc gcc-c++
     sudo yum -y install zlib zlib-devel bzip2 bzip2-devel bzip2-libs openssl openssl-devel openssl-libs nfs-utils rpcbind mdadm wget python-pip openmpi openmpi-devel automake autoconf
 	
-	install_kernel_pkgs
+	if [ ! -e "/usr/src/kernels/`uname -r`" ]; then
+		echo "Kernel packages matching kernel version `uname -r` not installed. Executing alternate package install..."
+		install_kernel_pkgs
+	fi
 }
 
 install_beegfs_repo()
