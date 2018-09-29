@@ -63,11 +63,38 @@ is_client()
 }
 
 # Installs all required packages.
+install_kernel_pkgs()
+{
+	HOST="buildlogs.centos.org"
+	CENTOS_MAJOR_VERSION=$(cat /etc/centos-release | awk '{print $4}' | awk -F"." '{print $1}')
+	CENTOS_MINOR_VERSION=$(cat /etc/centos-release | awk '{print $4}' | awk -F"." '{print $3}')
+	KERNEL_LEVEL_URL="https://$HOST/c$CENTOS_MAJOR_VERSION.$CENTOS_MINOR_VERSION.u.x86_64/kernel"
+
+	cd ~/
+	wget -r -l 1 $KERNEL_LEVEL_URL
+	
+	RESULT=$(find . -name "*.html" -print | xargs grep `uname -r`)
+
+	RELEASE_DATE=$(echo $RESULT | awk -F"/" '{print $5}')
+
+	KERNEL_ROOT_URL="$KERNEL_LEVEL_URL/$RELEASE_DATE/`uname -r`"
+
+	KERNEL_PACKAGES=()
+	KERNEL_PACKAGES+=("$KERNEL_ROOT_URL/kernel-`uname -r | sed 's/.x86_64*//'`.src.rpm")
+	KERNEL_PACKAGES+=("$KERNEL_ROOT_URL/kernel-devel-`uname -r`.rpm")
+	KERNEL_PACKAGES+=("$KERNEL_ROOT_URL/kernel-headers-`uname -r`.rpm")
+	KERNEL_PACKAGES+=("$KERNEL_ROOT_URL/kernel-tools-libs-devel-`uname -r`.rpm")
+	
+	sudo yum install -y ${KERNEL_PACKAGES[@]}
+}
+
 install_pkgs()
 {
     sudo yum -y install epel-release
-	sudo yum -y install kernel-devel kernel-headers kernel-tools-libs-devel gcc gcc-c++
+	sudo yum -y install gcc gcc-c++
     sudo yum -y install zlib zlib-devel bzip2 bzip2-devel bzip2-libs openssl openssl-devel openssl-libs nfs-utils rpcbind mdadm wget python-pip openmpi openmpi-devel automake autoconf
+	
+	install_kernel_pkgs
 }
 
 install_beegfs_repo()
