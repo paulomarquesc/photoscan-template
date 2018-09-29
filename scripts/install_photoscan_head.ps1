@@ -4,7 +4,7 @@ param
     [string]$ActivationCode,
 
     [Parameter(Mandatory=$false)]
-    [string]$DownloadPath="http://download.agisoft.com/photoscan-pro_1_4_4_x64.msi",
+    [string]$DownloadUrl="http://download.agisoft.com/photoscan-pro_1_4_4_x64.msi",
     
     [Parameter(Mandatory=$true)]
     [ValidateSet('Server','Node')]
@@ -37,10 +37,10 @@ $PhotoScanExecutable="photoscan.exe"
 
 function DownloadPhotoScan
 {
-    Write-Verbose "Downloading photoscan from $DownloadPath..." -Verbose
-    $localPath = Join-Path $scriptPath ([system.io.path]::GetFileName($DownloadPath))
+    Write-Verbose "Downloading photoscan from $DownloadUrl..." -Verbose
+    $localPath = Join-Path $scriptPath ([system.io.path]::GetFileName($DownloadUrl))
     $client = new-object System.Net.WebClient 
-    $client.DownloadFile($DownloadPath, $localPath) 
+    $client.DownloadFile($DownloadUrl, $localPath) 
 }
 
 function InstallPhotoscan

@@ -121,7 +121,7 @@
         "description": "Number of GPU VM Nodes."
       }
     },
-    "photoscanDownloadUrl": {
+    "linuxPhotoscanDownloadUrl": {
       "type": "string",
       "metadata": {
         "description": "Photoscan binaries download URL"
@@ -150,7 +150,7 @@
     "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
     "vnetId": "[resourceId(parameters('vnetRg'),'Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
     "subnetId": "[concat(variables('vnetId'),'/subnets/',parameters('photoscanSubnetName'))]",
-    "installParams": "[concat(parameters('activationCode'),' ',parameters('photoscanDownloadUrl'),' ',parameters('dispatch'),' ',parameters('nodeRoot'),' ',parameters('gpuMask'),' ',parameters('photoscanInstallPath'),' ',parameters('photoscanAbsolutePaths'))]",
+    "installParams": "[concat(parameters('activationCode'),' ',parameters('linuxPhotoscanDownloadUrl'),' ',parameters('dispatch'),' ',parameters('nodeRoot'),' ',parameters('gpuMask'),' ',parameters('photoscanInstallPath'),' ',parameters('photoscanAbsolutePaths'))]",
     "avSetInfo": [
       {
         "availabilitySetName": "GpuNodes-AvSet",

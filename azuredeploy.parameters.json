@@ -32,12 +32,6 @@
     "adSubnetAdressPrefix": {
       "value":"10.0.2.0/24"
     },
-    "deployLinuxJumpbox":{
-      "value":"yes"
-    },
-    "useBeeGfsStorage":{
-      "value":"yes"
-    },
     "dc1Name": {
       "value": "dc-01"
     },
@@ -52,6 +46,18 @@
     },
     "dcVmSize": {
       "value": "Standard_DS2_v2"
+    },
+    "dnsDomainName":{
+      "value":"testdomain.local"
+    },
+    "adDomainNetBIOSName":{
+      "value":"TESTDOMAIN"
+    },
+    "deployLinuxJumpbox":{
+      "value":"yes"
+    },
+    "useBeeGfsStorage":{
+      "value":"yes"
     },
     "windowsJumpboxVmName":{
       "value":"wjb-01"
@@ -110,7 +116,10 @@
     "beeGfsVnetName": {
       "value": "beegfs-vnet"
     },
-    "photoscanDownloadUrl": {
+    "windowsPhotoscanDownloadUrl": {
+      "value": "http://download.agisoft.com/photoscan-pro_1_4_4_x64.msi"
+    },
+    "linuxPhotoscanDownloadUrl": {
       "value": "http://download.agisoft.com/photoscan-pro_1_4_4_amd64.tar.gz"
     },
     "photoscanInstallPath": {
@@ -126,7 +135,7 @@
       "value": "/beegfs"
     },
     "beeGfsSmbServersVip": {
-      "value":"192.168.0.13"
+      "value":"192.168.0.30"
     },
     "beeGfsSmbServerARecordName":{
       "value":"beegfs"

@@ -112,14 +112,20 @@
       "metadata": {
         "description": "Use Photoscan absolute paths. 0 = No, 1= Yes."
       }
-    }
+    },
+    "windowsPhotoscanDownloadUrl":{
+      "type": "string",
+      "defaultValue": "http://download.agisoft.com/photoscan-pro_1_4_4_x64.msi",
+      "metadata": {
+        "description": "Windows binary Photoscan download URL."
+      }
   },
   "variables": {
     "deploymentUniqueString": "[uniqueString(concat(deployment().name,resourceGroup().id))]",
     "vnetId": "[resourceId(parameters('vnetRg'),'Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
     "subnetId": "[concat(variables('vnetId'),'/subnets/',parameters('photoscanSubnetName'))]",
     "photoScanRole": "Server",
-    "installParams": "[concat(' -ActivationCode ', parameters('activationCode'), ' -Role ', variables('photoScanRole'), ' -Dispatch ', variables('head').privateIpAddress, ' -Control ',  variables('head').privateIpAddress, ' -Root ', parameters('headRoot'), ' -AbsolutePaths ', parameters('photoscanAbsolutePaths'))]",
+    "installParams": "[concat(' -ActivationCode ', parameters('activationCode'), ' -Role ', variables('photoScanRole'), ' -Dispatch ', variables('head').privateIpAddress, ' -Control ',  variables('head').privateIpAddress, ' -Root ', parameters('headRoot'), ' -AbsolutePaths ', parameters('photoscanAbsolutePaths'), ' -DownloadUrl ',parameters('windowsPhotoscanDownloadUrl'))]",
     "head": {
       "name": "[parameters('headServerName')]",
       "storageAccountType": "Premium_LRS",

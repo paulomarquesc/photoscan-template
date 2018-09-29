@@ -146,6 +146,20 @@
       },
       "defaultValue": "Standard_DS2_v2"
     },
+    "dnsDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "Active Directory FQDN."
+      },
+      "defaultValue": "testdomain.local"
+    },
+    "adDomainNetBIOSName": {
+      "type": "string",
+      "metadata": {
+        "description": "Active Directory NetBIOS domain name."
+      },
+      "defaultValue": "TESTDOMAIN"
+    },
     "useSingleResourceGroup": {
       "type": "string",
       "allowedValues": [
@@ -178,6 +192,7 @@
     },
     "headRoot": {
       "type": "string",
+      "defaultValue": "\\\\beegfs\\beegfsshare\\Projects",
       "metadata": {
         "description": "Root path where the projects are located for Server."
       }
@@ -191,6 +206,7 @@
     },
     "nodeRoot": {
       "type": "string",
+      "defaultValue": "/beegfs/beegfsshare/Projects",
       "metadata": {
         "description": "Root path where the projects are located for Nodes."
       }
@@ -211,86 +227,105 @@
     },
     "dispatch": {
       "type": "string",
+      "defaultValue": "10.0.1.250",
       "metadata": {
         "description": "Ip address of the photoscan server (head)."
       }
     },
     "gpuMask": {
       "type": "int",
+      "defaultValue": 15,
       "metadata": {
         "description": "Decimal represention of how many GPUs will be enabled for processing. E.g. 15 means 1111, that is equal to 4 GPUs."
       }
     },
     "gpuNodesVmSize": {
       "type": "string",
+      "defaultValue": "Standard_NC6s_v2",
       "metadata": {
         "description": "GPU VM Size."
       }
     },
     "gpuNodesCount": {
       "type": "int",
+      "defaultValue": 2,
       "metadata": {
         "description": "Number of GPU VM Nodes."
       }
     },
     "headVmSize": {
       "type": "string",
+      "defaultValue": "Standard_D4S_v3",
       "metadata": {
         "description": "Head node VM Size."
       }
     },
     "beeGfsVnetRG": {
       "type": "string",
+      "defaultValue": "beegfs-rg-eus",
       "metadata": {
-        "description": "BeeGFS Vnet Resoure group name"
+        "description": "BeeGFS Vnet Resoure group name."
       }
     },
     "beeGfsVnetName": {
       "type": "string",
+      "defaultValue": "beegfs-vnet",
       "metadata": {
-        "description": "BeeGFS Virtual Network name"
+        "description": "BeeGFS Virtual Network name."
       }
     },
-    "photoscanDownloadUrl": {
+    "linuxPhotoscanDownloadUrl": {
       "type": "string",
+      "defaultValue": "http://download.agisoft.com/photoscan-pro_1_4_4_amd64.tar.gz",
       "metadata": {
-        "description": "Photoscan binaries download URL"
+        "description": "Photoscan Linux binaries download URL."
+      }
+    },
+    "windowsPhotoscanDownloadUrl": {
+      "type": "string",
+      "defaultValue": "http://download.agisoft.com/photoscan-pro_1_4_4_x64.msi",
+      "metadata": {
+        "description": "Windows binary Photoscan download URL."
       }
     },
     "photoscanInstallPath": {
       "type": "string",
       "metadata": {
-        "description": "Photoscan installation path. Defaults to /"
+        "description": "Photoscan installation path."
       },
       "defaultValue": "/"
     },
     "beeGfsMasterName": {
       "type": "string",
+      "defaultValue": "beegfsmaster",
       "metadata": {
         "description": "BeeGFS Master node VM name (single label)"
       }
     },
     "beeGfsMasterIpAddress": {
       "type": "string",
+      "defaultValue": "192.168.0.4",
       "metadata": {
-        "description": "BeeGFS Master Ip address"
+        "description": "BeeGFS Master Ip address, this will be added as an A record on DNS."
       }
     },
     "beeGfsMountPoint": {
       "type": "string",
       "metadata": {
-        "description": "Folder path where BeeGFS volume will be mounted"
+        "description": "Folder path where BeeGFS volume will be mounted."
       },
       "defaultValue": "/beegfs"
     },
     "beeGfsSmbServersVip": {
       "type": "string",
+      "defaultValue": "192.168.0.30",
       "metadata": {
-        "description": "Ip Address of the BeeGFS SMB clients Load Balancer"
+        "description": "Ip Address of the BeeGFS SMB clients Load Balancer,this will be added as an A record on DNS."
       }
     },
     "beeGfsSmbServerARecordName": {
       "type": "string",
+      "defaultValue": "beegfs",
       "metadata": {
         "description": "BeeGFS A record to be used by Photoscan Server (Head)."
       }
@@ -320,60 +355,65 @@
       },
       "defaultValue": "Standard_DS2_v2"
     },
-    "windowsJumpboxVmName":{
+    "windowsJumpboxVmName": {
       "type": "string",
       "metadata": {
         "description": "Windows Jumpbox VM Name."
       },
       "defaultValue": "wjb-01"
     },
-    "linuxJumpboxVmName":{
+    "linuxJumpboxVmName": {
       "type": "string",
       "metadata": {
         "description": "Linux Jumpbox VM Name."
       },
       "defaultValue": "ljb-01"
     },
-    "windowsJumpboxIpAddress":{
+    "windowsJumpboxIpAddress": {
       "type": "string",
       "metadata": {
         "description": "Windows Jumpbox VM Ip Address."
       },
-      "defaultValue":"10.0.0.4"
+      "defaultValue": "10.0.0.4"
     },
-    "linuxJumpboxIpAddress":{
+    "linuxJumpboxIpAddress": {
       "type": "string",
       "metadata": {
-        "description": "Windows Jumpbox VM Ip Address."
+        "description": "Linux Jumpbox VM Ip Address."
       },
-      "defaultValue":"10.0.0.5"
+      "defaultValue": "10.0.0.5"
     },
     "beegfsHpcUserHomeFolder": {
       "type": "string",
+      "defaultValue": "/mnt/beegfshome",
       "metadata": {
         "description": "This indicates beegfs mount point on master and storage+meta nodes for the hpcuser home folder, mounted on all nodes."
       }
     },
     "hpcUser": {
       "type": "string",
+      "defaultValue": "hpcuser",
       "metadata": {
         "description": "Hpc user that will be owner of all files in the hpc folder structure."
       }
     },
     "hpcUid": {
       "type": "int",
+      "defaultValue": 7007,
       "metadata": {
         "description": "Hpc User ID."
       }
     },
     "hpcGroup": {
       "type": "string",
+      "defaultValue": "hpcgroup",
       "metadata": {
         "description": "Hpc Group."
       }
     },
     "hpcGid": {
       "type": "int",
+      "defaultValue": 7007,
       "metadata": {
         "description": "Hpc Group ID."
       }
@@ -425,14 +465,12 @@
     "photoscanHeadUrl": "[concat(variables('baseUrl'),'/photoscanHead.json',parameters('_artifactsLocationSasToken'))]",
     "photoscanNodesUrl": "[concat(variables('baseUrl'),'/photoscanNodes.json',parameters('_artifactsLocationSasToken'))]",
     "useBeeGfsStorageUrl": "[concat(variables('baseUrl'),'/useBeeGfsStorage.json',parameters('_artifactsLocationSasToken'))]",
-    "dnsDomainName": "sofs.local",
-    "adDomainNetBIOSName": "sofs",
     "resourceGroups": {
-      "networkingRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'),resourceGroup().Name, 'sofs-rg02')]",
-      "jumpBoxRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'sofs-rg02')]",
-      "sofsRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'sofs-rg02')]",
-      "adRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'sofs-rg02')]",
-      "clientsRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'sofs-rg02')]"
+      "networkingRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'),resourceGroup().Name, 'photoscan-rg')]",
+      "jumpBoxRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'photoscan-rg')]",
+      "sofsRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'photoscan-rg')]",
+      "adRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'photoscan-rg')]",
+      "clientsRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'photoscan-rg')]"
     }
   },
   "resources": [
@@ -540,10 +578,10 @@
             "value": "[parameters('adminPassword')]"
           },
           "dnsDomainName": {
-            "value": "[variables('dnsDomainName')]"
+            "value": "[parameters('dnsDomainName')]"
           },
           "adDomainNetBIOSName": {
-            "value": "[variables('adDomainNetBIOSName')]"
+            "value": "[parameters('adDomainNetBIOSName')]"
           },
           "vnetRg": {
             "value": "[variables('resourceGroups').networkingRg]"
@@ -596,7 +634,7 @@
             "value": "[parameters('adminUsername')]"
           },
           "adDomainNetBIOSName": {
-            "value": "[variables('adDomainNetBIOSName')]"
+            "value": "[parameters('adDomainNetBIOSName')]"
           },
           "vnetName": {
             "value": "[parameters('vnetName')]"
@@ -613,11 +651,11 @@
           "deployLinuxJumpbox": {
             "value": "[parameters('deployLinuxJumpbox')]"
           },
-          "windowsJumpboxVmName":{
-            "value":"[parameters('windowsJumpboxVmName')]"
+          "windowsJumpboxVmName": {
+            "value": "[parameters('windowsJumpboxVmName')]"
           },
-          "linuxJumpboxVmName":{
-            "value":"[parameters('linuxJumpboxVmName')]"
+          "linuxJumpboxVmName": {
+            "value": "[parameters('linuxJumpboxVmName')]"
           },
           "windowsJumpboxVmSize": {
             "value": "[parameters('windowsJumpboxVmSize')]"
@@ -625,14 +663,14 @@
           "linuxJumpboxVmSize": {
             "value": "[parameters('linuxJumpboxVmSize')]"
           },
-          "windowsJumpboxIpAddress":{
-            "value":"[parameters('windowsJumpboxIpAddress')]"
+          "windowsJumpboxIpAddress": {
+            "value": "[parameters('windowsJumpboxIpAddress')]"
           },
-          "linuxJumpboxIpAddress":{
-            "value":"[parameters('linuxJumpboxIpAddress')]"
+          "linuxJumpboxIpAddress": {
+            "value": "[parameters('linuxJumpboxIpAddress')]"
           },
-          "jumpboxSubnetName":{
-            "value":"[parameters('jumpboxSubnetName')]"
+          "jumpboxSubnetName": {
+            "value": "[parameters('jumpboxSubnetName')]"
           }
         }
       }
@@ -672,7 +710,7 @@
           "vnetRg": {
             "value": "[variables('resourceGroups').networkingRg]"
           },
-          "photoscanSubnetName":{
+          "photoscanSubnetName": {
             "value": "[parameters('photoscanSubnetName')]"
           },
           "adminUsername": {
@@ -685,10 +723,10 @@
             "value": "[parameters('headServerName')]"
           },
           "dnsDomainName": {
-            "value": "[variables('dnsDomainName')]"
+            "value": "[parameters('dnsDomainName')]"
           },
           "adDomainNetBIOSName": {
-            "value": "[variables('adDomainNetBIOSName')]"
+            "value": "[parameters('adDomainNetBIOSName')]"
           },
           "activationCode": {
             "value": "[parameters('activationCode')]"
@@ -704,6 +742,9 @@
           },
           "photoscanAbsolutePaths": {
             "value": "[parameters('photoscanAbsolutePaths')]"
+          },
+          "windowsPhotoscanDownloadUrl": {
+            "value": "[parameters('windowsPhotoscanDownloadUrl')]"
           }
         }
       }
@@ -743,14 +784,14 @@
           "vnetRg": {
             "value": "[variables('resourceGroups').networkingRg]"
           },
-          "photoscanSubnetName":{
+          "photoscanSubnetName": {
             "value": "[parameters('photoscanSubnetName')]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
           "dnsDomainName": {
-            "value": "[variables('dnsDomainName')]"
+            "value": "[parameters('dnsDomainName')]"
           },
           "sshKeyData": {
             "value": "[parameters('sshKeyData')]"
@@ -764,10 +805,10 @@
           "nodeRoot": {
             "value": "[parameters('nodeRoot')]"
           },
-          "nodeSubnetIpAddressSuffix":{
-            "value": "[parameters('nodeSubnetIpAddressSuffix')]" 
+          "nodeSubnetIpAddressSuffix": {
+            "value": "[parameters('nodeSubnetIpAddressSuffix')]"
           },
-          "nodeStartIpAddress":{
+          "nodeStartIpAddress": {
             "value": "[parameters('nodeStartIpAddress')]"
           },
           "dispatch": {
@@ -782,8 +823,8 @@
           "gpuNodesVmSize": {
             "value": "[parameters('gpuNodesVmSize')]"
           },
-          "photoscanDownloadUrl": {
-            "value": "[parameters('photoscanDownloadUrl')]"
+          "linuxPhotoscanDownloadUrl": {
+            "value": "[parameters('linuxPhotoscanDownloadUrl')]"
           },
           "photoscanInstallPath": {
             "value": "[parameters('photoscanInstallPath')]"
@@ -791,7 +832,6 @@
           "photoscanAbsolutePaths": {
             "value": "[parameters('photoscanAbsolutePaths')]"
           }
-          
         }
       }
     },
@@ -828,7 +868,7 @@
             "value": "[parameters('gpuNodesCount')]"
           },
           "dnsDomainName": {
-            "value": "[variables('dnsDomainName')]"
+            "value": "[parameters('dnsDomainName')]"
           },
           "deploymentConfig": {
             "value": "[variables('deploymentConfig')]"
