@@ -603,7 +603,7 @@
     },
     {
       "condition": true,
-      "comments": "Jump box Deployment",
+      "comments": "Jumpbox Deployment",
       "name": "[concat(variables('deploymentUniqueString'),'-Jumpbox')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "[variables('deploymentConfig').apiVersions.deploymentApiVersion]",
@@ -632,6 +632,9 @@
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
+          },
+          "dnsDomainName":{
+            "value":"[parameters('dnsDomainName')]"
           },
           "adDomainNetBIOSName": {
             "value": "[parameters('adDomainNetBIOSName')]"
