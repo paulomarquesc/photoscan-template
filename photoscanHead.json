@@ -119,6 +119,7 @@
       "metadata": {
         "description": "Windows binary Photoscan download URL."
       }
+    }
   },
   "variables": {
     "deploymentUniqueString": "[uniqueString(concat(deployment().name,resourceGroup().id))]",
