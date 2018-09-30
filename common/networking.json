@@ -80,25 +80,11 @@
         "id": "[resourceId('Microsoft.Network/networkSecurityGroups','JumpBox-SN-NSG')]",
         "nsgSecurityRules": [
           {
-            "name": "allow-any-from-vnet",
-            "properties": {
-              "access": "Allow",
-              "description": "Allow all inbound traffic",
-              "destinationAddressPrefix": "*",
-              "destinationPortRange": "*",
-              "direction": "Inbound",
-              "priority": 100,
-              "protocol": "Tcp",
-              "sourceAddressPrefix": "VirtualNetwork",
-              "sourcePortRange": "*"
-            }
-          },
-          {
             "name": "allow-ssh-from-all",
             "properties": {
               "access": "Allow",
               "description": "Allow SSH inbound traffic",
-              "destinationAddressPrefix": "10.0.1.0/24",
+              "destinationAddressPrefix": "*",
               "destinationPortRange": "22",
               "direction": "Inbound",
               "priority": 200,
@@ -112,7 +98,7 @@
             "properties": {
               "access": "Allow",
               "description": "Allow SSH inbound traffic",
-              "destinationAddressPrefix": "10.0.1.0/24",
+              "destinationAddressPrefix": "*",
               "destinationPortRange": "3389",
               "direction": "Inbound",
               "priority": 300,

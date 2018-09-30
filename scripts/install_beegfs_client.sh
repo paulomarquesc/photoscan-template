@@ -1,5 +1,4 @@
 #!/bin/bash
-#TODO: Make home and scratch a parameter
 
 set -xeuo pipefail
 
@@ -33,23 +32,23 @@ if [[ ! -z "${4:-}" ]]; then
 fi
 
 HPC_UID=7007
-if [[ ! -z "${4:-}" ]]; then
-	HPC_UID=$4
+if [[ ! -z "${5:-}" ]]; then
+	HPC_UID=$5
 fi
 
-HPC_GROUP=hpc
-if [[ ! -z "${5:-}" ]]; then
-	HPC_GROUP="${5}"
+HPC_GROUP="hpcgroup"
+if [[ ! -z "${6:-}" ]]; then
+	HPC_GROUP="${6}"
 fi
 
 HPC_GID=7007
-if [[ ! -z "${6:-}" ]]; then
-	HPC_GID=${6}
+if [[ ! -z "${7:-}" ]]; then
+	HPC_GID=${7}
 fi
 
 CUSTOMDOMAIN=""
-if [[ ! -z "${7:-}" ]]; then
-	CUSTOMDOMAIN="${7}"
+if [[ ! -z "${8:-}" ]]; then
+	CUSTOMDOMAIN="${8}"
 fi
 
 BEEGFS_NODE_TYPE="client"
