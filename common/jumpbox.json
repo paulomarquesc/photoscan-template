@@ -54,7 +54,7 @@
     },
     "dnsDomainName": {
       "type": "string",
-      "defaultValue": "sofs.local",
+      "defaultValue": "testdomain.local",
       "metadata": {
         "description": "DNS domain name use to build the host's FQDN."
       }
