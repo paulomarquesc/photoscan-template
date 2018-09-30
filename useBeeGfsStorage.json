@@ -200,7 +200,7 @@
       "condition": true,
       "comments": "CustomScript extension execution to install BeeGFS client on photoscan Node",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('gpuNodesVMsList').items[copyIndex()].name,'/LinuxCustomScript')]",
+      "name": "[concat(variables('gpuNodesVMsList').items[copyIndex()].name,'/CustomScript')]",
       "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
       "location": "[parameters('location')]",
       "dependsOn": [
