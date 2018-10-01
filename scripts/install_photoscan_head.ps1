@@ -32,22 +32,22 @@ param
 $ErrorActionPreference="Stop"
 
 $scriptPath = ([System.IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Definition))
+$localInstallPath = Join-Path $scriptPath ([system.io.path]::GetFileName($DownloadUrl))
 $InstalledPhotoScanPath="C:\program files\agisoft\photoscan pro"
 $PhotoScanExecutable="photoscan.exe"
 
 function DownloadPhotoScan
 {
     Write-Verbose "Downloading photoscan from $DownloadUrl..." -Verbose
-    $localPath = Join-Path $scriptPath ([system.io.path]::GetFileName($DownloadUrl))
     $client = new-object System.Net.WebClient 
-    $client.DownloadFile($DownloadUrl, $localPath) 
+    $client.DownloadFile($DownloadUrl, $localInstallPath) 
 }
 
 function InstallPhotoscan
 {
     #Install it via MSI
-    Write-Verbose "Installing via MSIEXEC (localpath $localpath)..." -Verbose
-    & cmd /c "msiexec.exe /i $localPath" "/qn"
+    Write-Verbose "Installing via MSIEXEC (localInstallPath $localInstallPath)..." -Verbose
+    & cmd /c "msiexec.exe /i $localInstallPath" "/qn"
 }
 
 function ActivatePhotoscan
@@ -120,6 +120,7 @@ if (Test-Path $SetupMarker)
 }
 
 DownloadPhotoScan
+InstallPhotoscan
 ActivatePhotoscan
 COnfigureDefaultPhotoscanRegKey
 ConfigurePhotoscan
