@@ -117,7 +117,7 @@ A sample deployment script called Deploy-AzureResourceGroup.sh is provided with 
 * **beeGfsMasterName:** BeeGFS Master node VM name (single label). Default Value: `beegfsmaster`
 * **beeGfsMasterIpAddress:** BeeGFS Master Ip address, this will be added as an A record on DNS. Default Value: `192.168.0.4`
 * **beeGfsMountPoint:** Folder path where BeeGFS volume will be mounted. Default Value: `/beegfs`
-* **beeGfsSmbServersVip:** Ip Address of the BeeGFS SMB clients Load Balancer,this will be added as an A record on DNS. Default Value: `192.168.0.30`
+* **beeGfsSmbServersVip:** Ip Address of the BeeGFS SMB clients Load Balancer,this will be added as an A record on DNS. Default Value: `192.168.0.55`
 * **beeGfsSmbServerARecordName:** BeeGFS A record to be used by Photoscan Server (Head). Default Value: `beegfs`
 * **photoscanAbsolutePaths:** Use Photoscan absolute paths. 0 = No, 1= Yes. Default Value: `0`
 * **windowsJumpboxVmSize:** Windows Jumpbox VM Size. Default Value: `Standard_DS2_v2`

@@ -318,7 +318,7 @@
     },
     "beeGfsSmbServersVip": {
       "type": "string",
-      "defaultValue": "192.168.0.30",
+      "defaultValue": "192.168.0.55",
       "metadata": {
         "description": "Ip Address of the BeeGFS SMB clients Load Balancer,this will be added as an A record on DNS."
       }

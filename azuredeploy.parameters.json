@@ -135,7 +135,7 @@
       "value": "/beegfs"
     },
     "beeGfsSmbServersVip": {
-      "value":"192.168.0.30"
+      "value":"192.168.0.55"
     },
     "beeGfsSmbServerARecordName":{
       "value":"beegfs"
