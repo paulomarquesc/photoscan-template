@@ -503,18 +503,14 @@
         },
         {
             "condition": true,
-            "comments": "Server core 2016 final configurations",
+            "comments": "DC1 final configurations",
             "type": "Microsoft.Compute/virtualMachines/extensions",
-            "name": "[concat(variables('adVMsList')[copyIndex()].name,'/CustomScript')]",
+            "name": "[concat(variables('adVMsList')[0].name,'/CustomScript')]",
             "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
             "location": "[parameters('location')]",
             "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', variables('adVMsList')[1].name,'/extensions/configureDomainControllerVm')]"
+                "[concat('Microsoft.Compute/virtualMachines/', variables('adVMsList')[0].name,'/extensions/configureDomainControllerVm')]"
             ],
-            "copy": {
-                "name": "finalServerCoreConfigCopy",
-                "count": "[length(variables('adVMsList'))]"
-            },
             "properties": {
                 "publisher": "Microsoft.Compute",
                 "type": "CustomScriptExtension",
@@ -522,9 +518,32 @@
                 "autoUpgradeMinorVersion": true,
                 "settings": {
                     "fileUris": [
-                        "[concat(parameters('_artifactsLocation'),'/scripts/w_sc_2016_common_config.ps1', parameters('_artifactsLocationSasToken'))]"
+                        "[concat(parameters('_artifactsLocation'),'/scripts/dc1-customscript.ps1', parameters('_artifactsLocationSasToken'))]"
                     ],
-                    "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ./scripts/w_sc_2016_common_config.ps1',' ',variables('installParams'))]"
+                    "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ./scripts/dc1-customscript.ps1',' ',variables('installParams'))]"
+                }
+            }
+        },
+        {
+            "condition": true,
+            "comments": "DC2 final configurations",
+            "type": "Microsoft.Compute/virtualMachines/extensions",
+            "name": "[concat(variables('adVMsList')[1].name,'/CustomScript')]",
+            "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
+            "location": "[parameters('location')]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', variables('adVMsList')[1].name,'/extensions/configureDomainControllerVm')]"
+            ],
+            "properties": {
+                "publisher": "Microsoft.Compute",
+                "type": "CustomScriptExtension",
+                "typeHandlerVersion": "1.9",
+                "autoUpgradeMinorVersion": true,
+                "settings": {
+                    "fileUris": [
+                        "[concat(parameters('_artifactsLocation'),'/scripts/dc2-customscript.ps1', parameters('_artifactsLocationSasToken'))]"
+                    ],
+                    "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ./scripts/dc2-customscript.ps1')]"
                 }
             }
         }
