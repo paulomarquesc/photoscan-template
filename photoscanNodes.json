@@ -248,6 +248,9 @@
         "count": "[length(variables('gpuNodesVMsList').items)]"
       },
       "properties": {
+        "availabilitySet": {
+          "id": "[variables('gpuNodesVMsList').items[copyIndex()].availabilitySetId]"
+        },
         "hardwareProfile": {
           "vmSize": "[variables('gpuNodesVMsList').items[copyIndex()].vmSize]"
         },
