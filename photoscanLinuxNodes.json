@@ -153,14 +153,14 @@
     "installParams": "[concat(parameters('activationCode'),' ',parameters('linuxPhotoscanDownloadUrl'),' ',parameters('dispatch'),' ',parameters('nodeRoot'),' ',parameters('gpuMask'),' ',parameters('photoscanInstallPath'),' ',parameters('photoscanAbsolutePaths'))]",
     "avSetInfo": [
       {
-        "availabilitySetName": "GpuNodes-AvSet",
+        "availabilitySetName": "LinuxNodes-AvSet",
         "managedDisksAligned": "yes"
       }
     ],
     "faultDomains": 2,
     "updateDomains": 5,
     "managedDisksAligned": "yes",
-    "gpuNodesVMsList": {
+    "nodesVMsList": {
       "copy": [
         {
           "name": "items",
@@ -207,13 +207,13 @@
     {
       "condition": true,
       "comments": "Linux VMs Network Interfaces",
-      "name": "[concat(variables('gpuNodesVMsList').items[copyIndex()].name,'-NIC')]",
+      "name": "[concat(variables('nodesVMsList').items[copyIndex()].name,'-NIC')]",
       "type": "Microsoft.Network/networkInterfaces",
       "location": "[parameters('location')]",
       "apiVersion": "[parameters('deploymentConfig').apiVersions.nicApiVersion]",
       "copy": {
         "name": "nodesNicCopy",
-        "count": "[length(variables('gpuNodesVMsList').items)]"
+        "count": "[length(variables('nodesVMsList').items)]"
       },
       "properties": {
         "ipConfigurations": [
@@ -221,9 +221,9 @@
             "name": "ipconfig1",
             "properties": {
               "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[variables('gpuNodesVMsList').items[copyIndex()].privateIpAddress]",
+              "privateIPAddress": "[variables('nodesVMsList').items[copyIndex()].privateIpAddress]",
               "subnet": {
-                "id": "[variables('gpuNodesVMsList').items[copyIndex()].subnetId]"
+                "id": "[variables('nodesVMsList').items[copyIndex()].subnetId]"
               }
             }
           }
@@ -237,7 +237,7 @@
       "comments": "Deploying Linux Nodes virtual machines",
       "apiVersion": "[parameters('deploymentConfig').apiVersions.vmApiVersion]",
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[variables('gpuNodesVMsList').items[copyIndex()].name]",
+      "name": "[variables('nodesVMsList').items[copyIndex()].name]",
       "location": "[parameters('location')]",
       "dependsOn": [
         "nodesNicCopy",
@@ -245,17 +245,17 @@
       ],
       "copy": {
         "name": "nodesVMCopy",
-        "count": "[length(variables('gpuNodesVMsList').items)]"
+        "count": "[length(variables('nodesVMsList').items)]"
       },
       "properties": {
         "availabilitySet": {
-          "id": "[variables('gpuNodesVMsList').items[copyIndex()].availabilitySetId]"
+          "id": "[variables('nodesVMsList').items[copyIndex()].availabilitySetId]"
         },
         "hardwareProfile": {
-          "vmSize": "[variables('gpuNodesVMsList').items[copyIndex()].vmSize]"
+          "vmSize": "[variables('nodesVMsList').items[copyIndex()].vmSize]"
         },
         "osProfile": {
-          "computerName": "[concat(variables('gpuNodesVMsList').items[copyIndex()].name,'.',parameters('dnsDomainName'))]",
+          "computerName": "[concat(variables('nodesVMsList').items[copyIndex()].name,'.',parameters('dnsDomainName'))]",
           "adminUsername": "[parameters('adminUsername')]",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
@@ -271,25 +271,25 @@
         },
         "storageProfile": {
           "imageReference": {
-            "publisher": "[variables('gpuNodesVMsList').items[copyIndex()].imageInfo.publisher]",
-            "offer": "[variables('gpuNodesVMsList').items[copyIndex()].imageInfo.offer]",
-            "sku": "[variables('gpuNodesVMsList').items[copyIndex()].imageInfo.sku]",
+            "publisher": "[variables('nodesVMsList').items[copyIndex()].imageInfo.publisher]",
+            "offer": "[variables('nodesVMsList').items[copyIndex()].imageInfo.offer]",
+            "sku": "[variables('nodesVMsList').items[copyIndex()].imageInfo.sku]",
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(variables('gpuNodesVMsList').items[copyIndex()].name,'-',copyIndex(1),'-osdisk')]",
+            "name": "[concat(variables('nodesVMsList').items[copyIndex()].name,'-',copyIndex(1),'-osdisk')]",
             "caching": "ReadWrite",
             "createOption": "FromImage",
             "managedDisk": {
-              "storageAccountType": "[variables('gpuNodesVMsList').items[copyIndex()].storageAccountType]"
+              "storageAccountType": "[variables('nodesVMsList').items[copyIndex()].storageAccountType]"
             },
-            "diskSizeGB": "[variables('gpuNodesVMsList').items[copyIndex()].osDiskSizeGB]"
+            "diskSizeGB": "[variables('nodesVMsList').items[copyIndex()].osDiskSizeGB]"
           }
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('gpuNodesVMsList').items[copyIndex()].name,'-NIC'))]",
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',concat(variables('nodesVMsList').items[copyIndex()].name,'-NIC'))]",
               "properties": {
                 "primary": true
               }
@@ -301,7 +301,7 @@
     {
       "condition": true,
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('gpuNodesVMsList').items[copyIndex()].name,'/NvidiaGpuDriverLinux')]",
+      "name": "[concat(variables('nodesVMsList').items[copyIndex()].name,'/NvidiaGpuDriverLinux')]",
       "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -309,7 +309,7 @@
       ],
       "copy": {
         "name": "nvidiadriversCopy",
-        "count": "[length(variables('gpuNodesVMsList').items)]"
+        "count": "[length(variables('nodesVMsList').items)]"
       },
       "properties": {
         "publisher": "Microsoft.HpcCompute",
@@ -323,7 +323,7 @@
       "condition": true,
       "comments": "CustomScript extension execution to setup photoscan on GPU Nodes",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('gpuNodesVMsList').items[copyIndex()].name,'/CustomScript')]",
+      "name": "[concat(variables('nodesVMsList').items[copyIndex()].name,'/CustomScript')]",
       "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -331,7 +331,7 @@
       ],
       "copy": {
         "name": "vmLinuxCustomScriptCopy",
-        "count": "[length(variables('gpuNodesVMsList').items)]"
+        "count": "[length(variables('nodesVMsList').items)]"
       },
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",

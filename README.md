@@ -70,7 +70,41 @@ A sample deployment script called Deploy-AzureResourceGroup.sh is provided with 
         ```bash
         ./Deploy-AzureResourceGroup.sh -g photoscan-rg -l eastus -s storageaccountname -r storage-account-rg -v mykeyvault
         ```
-    
+
+### Deploying Windows worker nodes instead of Linux OS
+By default the template deploys the worker nodes as Linux VMs, for an end-to-end experience, this is the option that will be able to integrate automatically to BeeGFS parallel file system storage if it was deployed using the beegfs template indicated in the pre-requisites.
+If you want to deploy Windows worker nodes, storage configuration will need to be manual because I'm not providing any storage option for this scenario, to get Windows nodes, please make sure you change the following parameters to these values before deploying this template:
+
+**azuredeploy.parameters.json -> useBeeGfsStorage**
+
+From
+```json
+    "useBeeGfsStorage":{
+      "value":"yes"
+    },
+```
+To
+```json
+    "useBeeGfsStorage":{
+      "value":"no"
+    },
+```
+
+**azuredeploy.parameters.json -> workerNodesType**
+
+From
+```json
+    "workerNodesType":{
+      "value": "linux"
+    },
+```
+To
+```json
+    "workerNodesType":{
+      "value": "windows"
+    },
+```
+
 ### List of parameters per template and their descriptions
 #### azuredeploy.parameters.json
 * **_artifactsLocation:** Auto-generated container in staging storage account to receive post-build staging folder upload.

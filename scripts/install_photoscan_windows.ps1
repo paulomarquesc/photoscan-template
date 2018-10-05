@@ -64,7 +64,6 @@ function ConfigurePhotoscan
     if ($Role -ieq "server")
     {
         Write-Verbose "Creating service with SC CREATE" -Verbose
-        # Create service
         & cmd /c "sc" "create" "PhotoScanServer" "binpath=" "C:\Program Files\Agisoft\PhotoScan Pro\photoscan --service run --server --dispatch $Dispatch --control $Control --root $Root --absolute_paths $AbsolutePaths" "start=" "delayed-auto" "DisplayName=" "Agisoft Photoscan Pro Server"
 
         Write-Verbose "Enabling Firewall Port $ClientCommPort" -Verbose
@@ -73,13 +72,13 @@ function ConfigurePhotoscan
     }
     else
     {
-        # Create service
         & cmd /c "sc" "create" "PhotoScanClient" "binpath=" "C:\Program Files\Agisoft\PhotoScan Pro\photoscan --service run --node --dispatch $Dispatch --root $Root --gpu_mask $GpuMask --absolute_paths $AbsolutePaths" "start=" "delayed-auto" "DisplayName=" "Agisoft Photoscan Pro Node"
+        #New-NetFirewallRule -DisplayName 'PhotoscanServerPort' -Profile @('Domain', 'Private') -Direction Inbound -Action Allow -Protocol TCP -LocalPort @($ClientCommPort)
         Start-Service PhotoScanClient
     }
 }
 
-function COnfigureDefaultPhotoscanRegKey
+function ConfigureDefaultPhotoscanRegKey
 {
 
     # All new users
@@ -122,7 +121,12 @@ if (Test-Path $SetupMarker)
 DownloadPhotoScan
 InstallPhotoscan
 ActivatePhotoscan
-COnfigureDefaultPhotoscanRegKey
+
+if ($Role -ieq "server")
+{
+    ConfigureDefaultPhotoscanRegKey
+}
+
 ConfigurePhotoscan
 
 "Done" | Out-File $SetupMarker

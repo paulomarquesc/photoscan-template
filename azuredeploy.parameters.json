@@ -86,8 +86,11 @@
     "headVmSize": {
       "value": "Standard_D4S_v3"
     },
+    "workerNodesType":{
+      "value": "linux"
+    },
     "nodeNameSuffix":{
-      "value": "gpunode"
+      "value": "wgpunode"
     },
     "nodeRoot": {
       "value": "/beegfs/beegfsshare/Projects"
@@ -96,7 +99,7 @@
       "value": "10.0.1" 
     },
     "nodeStartIpAddress":{
-      "value":20
+      "value":30
     },
     "dispatch": {
       "value": "10.0.1.250"
@@ -105,7 +108,7 @@
       "value": 15
     },
     "gpuNodesCount": {
-      "value": 2
+      "value": 4
     },
     "gpuNodesVmSize": {
       "value": "Standard_NC6s_v2"

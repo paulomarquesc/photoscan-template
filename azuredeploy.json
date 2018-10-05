@@ -197,6 +197,17 @@
         "description": "Root path where the projects are located for Server."
       }
     },
+    "workerNodesType":{
+      "type":"string",
+      "defaultValue": "linux",
+      "allowedValues": [
+        "linux",
+        "windows"
+      ],
+      "metadata": {
+        "description": "OS type of worker nodes, Linux or Windows."
+      }
+    },
     "nodeNameSuffix": {
       "type": "string",
       "defaultValue": "workernode",
@@ -463,7 +474,8 @@
     "jumpBoxUrl": "[concat(variables('baseUrl'),'/common/jumpbox.json',parameters('_artifactsLocationSasToken'))]",
     "activeDirectoryUrl": "[concat(variables('baseUrl'),'/common/activeDirectory.json',parameters('_artifactsLocationSasToken'))]",
     "photoscanHeadUrl": "[concat(variables('baseUrl'),'/photoscanHead.json',parameters('_artifactsLocationSasToken'))]",
-    "photoscanNodesUrl": "[concat(variables('baseUrl'),'/photoscanNodes.json',parameters('_artifactsLocationSasToken'))]",
+    "photoscanLinuxNodesUrl": "[concat(variables('baseUrl'),'/photoscanLinuxNodes.json',parameters('_artifactsLocationSasToken'))]",
+    "photoscanWindowsNodesUrl": "[concat(variables('baseUrl'),'/photoscanWindowsNodes.json',parameters('_artifactsLocationSasToken'))]",
     "useBeeGfsStorageUrl": "[concat(variables('baseUrl'),'/useBeeGfsStorage.json',parameters('_artifactsLocationSasToken'))]",
     "resourceGroups": {
       "networkingRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'),resourceGroup().Name, 'photoscan-rg')]",
@@ -475,7 +487,7 @@
   },
   "resources": [
     {
-      "condition": true,
+      "condition": false,
       "comments": "Virtual network deployment",
       "name": "[concat(variables('deploymentUniqueString'),'-Networking')]",
       "type": "Microsoft.Resources/deployments",
@@ -522,7 +534,7 @@
       }
     },
     {
-      "condition": true,
+      "condition": false,
       "comments": "Active Directory Forest Deployment",
       "name": "[concat(variables('deploymentUniqueString'),'-AD')]",
       "type": "Microsoft.Resources/deployments",
@@ -602,7 +614,7 @@
       }
     },
     {
-      "condition": true,
+      "condition": false,
       "comments": "Jumpbox Deployment",
       "name": "[concat(variables('deploymentUniqueString'),'-Jumpbox')]",
       "type": "Microsoft.Resources/deployments",
@@ -679,7 +691,7 @@
       }
     },
     {
-      "condition": true,
+      "condition": false,
       "comments": "Windows Photoscan Head Deployment",
       "name": "[concat(variables('deploymentUniqueString'),'-Head')]",
       "type": "Microsoft.Resources/deployments",
@@ -753,9 +765,9 @@
       }
     },
     {
-      "condition": true,
+      "condition": false,
       "comments": "Linux Photoscan Nodes Deployment",
-      "name": "[concat(variables('deploymentUniqueString'),'-nodes')]",
+      "name": "[if(equals(parameters('workerNodesType'),'linux'),concat(variables('deploymentUniqueString'),'-LinuxNodes'),concat(variables('deploymentUniqueString'),'-LinuxNodes-Invalid'))]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "[variables('deploymentConfig').apiVersions.deploymentApiVersion]",
       "resourceGroup": "[variables('resourceGroups').clientsRg]",
@@ -765,7 +777,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[variables('photoscanNodesUrl')]",
+          "uri": "[variables('photoscanLinuxNodesUrl')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -839,6 +851,92 @@
       }
     },
     {
+      "condition": true,
+      "comments": "Windows Photoscan Nodes Deployment",
+      "name": "[if(equals(parameters('workerNodesType'),'windows'),concat(variables('deploymentUniqueString'),'-WindowsNodes'),concat(variables('deploymentUniqueString'),'-WindowsNodes-Invalid'))]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('deploymentConfig').apiVersions.deploymentApiVersion]",
+      "resourceGroup": "[variables('resourceGroups').clientsRg]",
+      "dependsOn": [
+        "[concat(variables('deploymentUniqueString'),'-AD')]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('photoscanWindowsNodesUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "deploymentConfig": {
+            "value": "[variables('deploymentConfig')]"
+          },
+          "vnetName": {
+            "value": "[parameters('vnetName')]"
+          },
+          "vnetRg": {
+            "value": "[variables('resourceGroups').networkingRg]"
+          },
+          "photoscanSubnetName": {
+            "value": "[parameters('photoscanSubnetName')]"
+          },
+          "adminUsername": {
+            "value": "[parameters('adminUsername')]"
+          },
+          "dnsDomainName": {
+            "value": "[parameters('dnsDomainName')]"
+          },
+          "adDomainNetBIOSName": {
+            "value": "[parameters('adDomainNetBIOSName')]"
+          },          
+          "adminPassword": {
+            "value": "[parameters('adminPassword')]"
+          },
+          "activationCode": {
+            "value": "[parameters('activationCode')]"
+          },
+          "nodeNameSuffix": {
+            "value": "[parameters('nodeNameSuffix')]"
+          },
+          "nodeRoot": {
+            "value": "[parameters('headRoot')]"
+          },
+          "nodeSubnetIpAddressSuffix": {
+            "value": "[parameters('nodeSubnetIpAddressSuffix')]"
+          },
+          "nodeStartIpAddress": {
+            "value": "[parameters('nodeStartIpAddress')]"
+          },
+          "dispatch": {
+            "value": "[parameters('dispatch')]"
+          },
+          "gpuMask": {
+            "value": "[parameters('gpuMask')]"
+          },
+          "gpuNodesCount": {
+            "value": "[parameters('gpuNodesCount')]"
+          },
+          "gpuNodesVmSize": {
+            "value": "[parameters('gpuNodesVmSize')]"
+          },
+          "windowsPhotoscanDownloadUrl": {
+            "value": "[parameters('windowsPhotoscanDownloadUrl')]"
+          },
+          "photoscanAbsolutePaths": {
+            "value": "[parameters('photoscanAbsolutePaths')]"
+          }
+        }
+      }
+    },
+    {
       "condition": "[equals(parameters('useBeeGfsStorage'),'yes')]",
       "comments": "Configure Linux Nodes to use BeeGFS",
       "name": "[concat(variables('deploymentUniqueString'),'-nodes-attach-BeeGFS')]",
@@ -846,7 +944,7 @@
       "apiVersion": "[variables('deploymentConfig').apiVersions.deploymentApiVersion]",
       "resourceGroup": "[variables('resourceGroups').clientsRg]",
       "dependsOn": [
-        "[concat(variables('deploymentUniqueString'),'-nodes')]"
+        "[if(equals(parameters('workerNodesType'),'linux'),concat(variables('deploymentUniqueString'),'-LinuxNodes'),concat(variables('deploymentUniqueString'),'-LinuxNodes-Invalid'))]"
       ],
       "properties": {
         "mode": "Incremental",

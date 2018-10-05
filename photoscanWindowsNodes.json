@@ -25,31 +25,19 @@
       "type": "string",
       "metadata": {
         "description": "Virtual Network name"
-      },
-      "defaultValue": "sofs-Vnet"
+      }
     },
     "dnsDomainName": {
       "type": "string",
+      "defaultValue": "sofstest.local",
       "metadata": {
         "description": "DNS domain name use to build the host's FQDN."
-      }
-    },
-    "adDomainNetBIOSName": {
-      "type": "string",
-      "metadata": {
-        "description": "NetBIOS domain name for Active Directory deployment."
       }
     },
     "adminUsername": {
       "type": "string",
       "metadata": {
         "description": "Name of admin account of the VMs, this name cannot be well know names, like root, admin, administrator, guest, etc."
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Domain Administrator password"
       }
     },
     "vnetRG": {
@@ -71,16 +59,42 @@
         "description": "Object that contains library paths, api versions, SAS token, from master template."
       }
     },
+    "adminPassword": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Domain Administrator password"
+      }
+    },
     "activationCode": {
       "type": "securestring",
       "metadata": {
         "description": "Photoscan Activation Code."
       }
     },
-    "headRoot": {
+    "nodeNameSuffix": {
+      "type": "string",
+      "defaultValue": "workernode",
+      "metadata": {
+        "description": "Name suffix to be used in the GPU Nodes."
+      }
+    },
+    "nodeRoot": {
       "type": "string",
       "metadata": {
         "description": "Root path where the projects are located."
+      }
+    },
+    "nodeSubnetIpAddressSuffix": {
+      "type": "string",
+      "metadata": {
+        "description": "Nodes will have static Ip addresses, this is the network part of a class C subnet."
+      }
+    },
+    "nodeStartIpAddress": {
+      "type": "int",
+      "defaultValue": 20,
+      "metadata": {
+        "description": "Nodes will have static Ip addresses, this is the start number of the host part of the class C ip address."
       }
     },
     "dispatch": {
@@ -89,28 +103,22 @@
         "description": "Ip address of the photoscan server (head)."
       }
     },
-    "headVmSize": {
-      "type": "string",
-      "metadata": {
-        "description": "Head node VM Size."
-      }
-    },
-    "headServerName": {
-      "type": "string",
-      "defaultValue": "headnode",
-      "metadata": {
-        "description": "Photoscan Server (head) name."
-      }
-    },
-    "photoscanAbsolutePaths": {
+    "gpuMask": {
       "type": "int",
-      "defaultValue": 0,
-      "allowedValues": [
-        0,
-        1
-      ],
       "metadata": {
-        "description": "Use Photoscan absolute paths. 0 = No, 1= Yes."
+        "description": "Decimal represention of how many GPUs will be enabled for processing. E.g. 15 means 1111, that is equal to 4 GPUs."
+      }
+    },
+    "gpuNodesVmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "GPU VM Size."
+      }
+    },
+    "gpuNodesCount": {
+      "type": "int",
+      "metadata": {
+        "description": "Number of GPU VM Nodes."
       }
     },
     "windowsPhotoscanDownloadUrl":{
@@ -119,35 +127,98 @@
       "metadata": {
         "description": "Windows binary Photoscan download URL."
       }
+    },
+    "photoscanAbsolutePaths":{
+      "type":"int",
+      "defaultValue": 0,
+      "allowedValues": [
+        0,
+        1
+      ],
+      "metadata": {
+        "description": "Use Photoscan absolute paths. 0 = No, 1 = Yes."
+      }
+    },
+    "adDomainNetBIOSName": {
+      "type": "string",
+      "metadata": {
+        "description": "NetBIOS domain name for Active Directory deployment."
+      }
     }
   },
   "variables": {
     "deploymentUniqueString": "[uniqueString(concat(deployment().name,resourceGroup().id))]",
     "vnetId": "[resourceId(parameters('vnetRg'),'Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
     "subnetId": "[concat(variables('vnetId'),'/subnets/',parameters('photoscanSubnetName'))]",
-    "photoScanRole": "Server",
-    "installParams": "[concat(' -ActivationCode ', parameters('activationCode'), ' -Role ', variables('photoScanRole'), ' -Dispatch ', variables('head').privateIpAddress, ' -Control ',  variables('head').privateIpAddress, ' -Root ', parameters('headRoot'), ' -AbsolutePaths ', parameters('photoscanAbsolutePaths'), ' -DownloadUrl ',parameters('windowsPhotoscanDownloadUrl'))]",
-    "head": {
-      "name": "[parameters('headServerName')]",
-      "storageAccountType": "Premium_LRS",
-      "subnetId": "[variables('subnetId')]",
-      "vmSize": "[parameters('headVmSize')]",
-      "privateIpAddress": "[parameters('dispatch')]",
-      "imageInfo": {
-        "publisher": "MicrosoftWindowsServer",
-        "offer": "WindowsServer",
-        "sku": "2016-Datacenter",
-        "version": "latest"
+    "photoScanRole": "Node",
+    "installParams": "[concat(' -ActivationCode ', parameters('activationCode'), ' -Role ', variables('photoScanRole'), ' -Dispatch ', parameters('dispatch'), ' -Root ', parameters('nodeRoot'), ' -AbsolutePaths ', parameters('photoscanAbsolutePaths'), ' -GpuMask ', parameters('gpuMask'), ' -DownloadUrl ',parameters('windowsPhotoscanDownloadUrl'))]",
+    "avSetInfo": [
+      {
+        "availabilitySetName": "WindowsNodes-AvSet",
+        "managedDisksAligned": "yes"
       }
+    ],
+    "faultDomains": 2,
+    "updateDomains": 5,
+    "managedDisksAligned": "yes",
+    "nodesVMsList": {
+      "copy": [
+        {
+          "name": "items",
+          "count": "[parameters('gpuNodesCount')]",
+          "input": {
+            "name": "[concat(parameters('nodeNameSuffix'),'-',copyIndex('items',1))]",
+            "storageAccountType": "Premium_LRS",
+            "osDiskSizeGB": 128,
+            "subnetId": "[variables('subnetId')]",
+            "vmSize": "[parameters('gpuNodesVmSize')]",
+            "privateIpAddress": "[concat(parameters('nodeSubnetIpAddressSuffix'),'.',add(copyIndex('items',1),parameters('nodeStartIpAddress')))]",
+            "availabilitySetId": "[resourceId('Microsoft.Compute/availabilitySets',variables('avSetInfo')[0].availabilitySetName)]",
+            "imageInfo": {
+              "publisher": "MicrosoftWindowsServer",
+              "offer": "WindowsServer",
+              "sku": "2016-Datacenter",
+              "version":"latest"
+            }
+          }
+        }
+      ]
     }
   },
   "resources": [
     {
       "condition": true,
-      "comments": "Head Node deployment",
-      "name": "[concat(variables('deploymentUniqueString'),'-',variables('head').name)]",
+      "comments": "Availability Sets",
+      "type": "Microsoft.Compute/availabilitySets",
+      "name": "[variables('avSetInfo')[copyIndex()].availabilitySetName]",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.availabilitySetApiVersion]",
+      "location": "[parameters('location')]",
+      "copy": {
+        "name": "avSetCopy",
+        "count": "[length(variables('avSetInfo'))]"
+      },
+      "properties": {
+        "platformFaultDomainCount": "[variables('faultDomains')]",
+        "platformUpdateDomainCount": "[variables('updateDomains')]"
+      },
+      "sku": {
+        "name": "[if(equals(variables('managedDisksAligned'),'yes'),'Aligned','Classic')]"
+      }
+    },
+
+    {
+      "condition": true,
+      "comments": "Windows Nodes deployment",
+      "name": "[concat(variables('deploymentUniqueString'),'-',variables('nodesVmsList').items[copyIndex()].name)]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "[parameters('deploymentConfig').apiVersions.deploymentApiVersion]",
+      "copy": {
+        "name": "WindowsNodesCopy",
+        "count":"[parameters('gpuNodesCount')]"
+      },
+      "dependsOn": [
+        "avSetCopy"
+      ],
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -168,16 +239,16 @@
             "value": "yes"
           },
           "vmNamePrefix": {
-            "value": "[variables('head').name]"
+            "value": "[variables('nodesVmsList').items[copyIndex()].name]"
           },
           "vmSize": {
-            "value": "[variables('head').vmSize]"
+            "value": "[variables('nodesVmsList').items[copyIndex()].vmSize]"
           },
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
           "imageInfo": {
-            "value": "[variables('head').imageInfo]"
+            "value": "[variables('nodesVmsList').items[copyIndex()].imageInfo]"
           },
           "sasToken": {
             "value": "[parameters('_artifactsLocationSasToken')]"
@@ -186,16 +257,19 @@
             "value": "no"
           },
           "storageAccountType": {
-            "value": "[variables('head').storageAccountType]"
+            "value": "[variables('nodesVmsList').items[copyIndex()].storageAccountType]"
           },
           "useAvailabilitySet": {
-            "value": "no"
+            "value": "yes"
+          },
+          "avSetId":{
+            "value": "[variables('nodesVmsList').items[copyIndex()].availabilitySetId]"
           },
           "subnetId": {
-            "value": "[variables('head').subnetId]"
+            "value": "[variables('nodesVmsList').items[copyIndex()].subnetId]"
           },
           "enableAcceleratedNetworking": {
-            "value": true
+            "value": false
           },
           "usePublicIpAddress": {
             "value": "no"
@@ -213,7 +287,7 @@
             "value": "Static"
           },
           "privateIpAddress": {
-            "value": "[variables('head').privateIpAddress]"
+            "value": "[variables('nodesVmsList').items[copyIndex()].privateIpAddress]"
           },
           "adminPassword": {
             "value": "[parameters('adminPassword')]"
@@ -226,14 +300,39 @@
     },
     {
       "condition": true,
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('nodesVMsList').items[copyIndex()].name,'/NvidiaGpuDriverWindows')]",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "WindowsNodesCopy"
+      ],
+      "copy": {
+        "name": "nvidiadriversCopy",
+        "count": "[length(variables('nodesVMsList').items)]"
+      },
+      "properties": {
+        "publisher": "Microsoft.HpcCompute",
+        "type": "NvidiaGpuDriverWindows",
+        "typeHandlerVersion": 1.1,
+        "autoUpgradeMinorVersion": true,
+        "settings": {}
+      }
+    },
+    {
+      "condition": true,
       "comments": "DOMAIN JOIN - Head - Domain joining VMs",
-      "name": "[concat(variables('deploymentUniqueString'),'domainJoinGpuVm','-',variables('head').name)]",
+      "name": "[concat(variables('deploymentUniqueString'),'domainJoinWinNodeVm','-',variables('nodesVmsList').items[copyIndex()].name)]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "[parameters('deploymentConfig').apiVersions.deploymentApiVersion]",
       "resourceGroup": "[resourceGroup().name]",
       "dependsOn": [
-        "[concat(variables('deploymentUniqueString'),'-',variables('head').name)]"
+        "nvidiadriversCopy"
       ],
+      "copy": {
+        "count":"[parameters('gpuNodesCount')]",
+        "name": "windowsNodesdomainJoinCopy"
+      },
       "properties": {
         "mode": "Incremental",
         "templateLink": {
@@ -248,7 +347,7 @@
             "value": "[parameters('location')]"
           },
           "vmList": {
-            "value": "[variables('head').name]"
+            "value": "[variables('nodesVmsList').items[copyIndex()].name]"
           },
           "domainJoinUserName": {
             "value": "[concat(parameters('adDomainNetBIOSName'),'\\',parameters('adminUsername'))]"
@@ -266,12 +365,16 @@
       "condition": true,
       "comments": "Configure Photoscan on Server",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('head').name,'/CustomScript')]",
+      "name": "[concat(variables('nodesVmsList').items[copyIndex()].name,'/CustomScript')]",
       "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
       "location": "[parameters('location')]",
       "dependsOn": [
-        "[concat(variables('deploymentUniqueString'),'domainJoinGpuVm','-',variables('head').name)]"
+        "windowsNodesdomainJoinCopy"
       ],
+      "copy": {
+        "name":"customScriptCopy",
+        "count":"[parameters('gpuNodesCount')]"
+      },
       "properties": {
         "publisher": "Microsoft.Compute",
         "type": "CustomScriptExtension",
