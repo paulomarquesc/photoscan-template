@@ -1,6 +1,5 @@
 #!/bin/bash
 
-#set -x
 set -xeuo pipefail
 
 if [[ $(id -u) -ne 0 ]] ; then
@@ -16,7 +15,7 @@ fi
 ACTIVATION_CODE="$1"
 
 DOWNLOAD_PATH="http://download.agisoft.com/photoscan-pro_1_4_3_amd64.tar.gz"
-if [ -n "$2" ]; then
+if [[ ! -z "${2:-}" ]]; then
 	DOWNLOAD_PATH="$2"
 fi
 
@@ -25,12 +24,12 @@ ROOT_PATH="$4"
 GPU_MASK="$5"
 
 INSTALL_PATH="/"
-if [ -n "$6" ]; then
+if [[ ! -z "${6:-}" ]]; then
 	INSTALL_PATH="$6"
 fi
 
 ABSOLUTE_PATHS=0
-if [ -n "$7" ]; then
+if [[ ! -z "${7:-}" ]]; then
 	ABSOLUTE_PATHS="$7"
 fi
 

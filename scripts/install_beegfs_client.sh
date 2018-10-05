@@ -16,7 +16,7 @@ MGMT_HOSTNAME=$1
 
 # Share
 SHARE_SCRATCH="/beegfs"
-if [ -n "$2" ]; then
+if [[ ! -z "${2:-}" ]]; then
 	SHARE_SCRATCH=$2
 fi
 
