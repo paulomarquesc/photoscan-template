@@ -765,7 +765,7 @@
       }
     },
     {
-      "condition": false,
+      "condition": "[equals(parameters('workerNodesType'),'linux')]",
       "comments": "Linux Photoscan Nodes Deployment",
       "name": "[if(equals(parameters('workerNodesType'),'linux'),concat(variables('deploymentUniqueString'),'-LinuxNodes'),concat(variables('deploymentUniqueString'),'-LinuxNodes-Invalid'))]",
       "type": "Microsoft.Resources/deployments",
@@ -851,7 +851,7 @@
       }
     },
     {
-      "condition": true,
+      "condition": "[equals(parameters('workerNodesType'),'windows')]",
       "comments": "Windows Photoscan Nodes Deployment",
       "name": "[if(equals(parameters('workerNodesType'),'windows'),concat(variables('deploymentUniqueString'),'-WindowsNodes'),concat(variables('deploymentUniqueString'),'-WindowsNodes-Invalid'))]",
       "type": "Microsoft.Resources/deployments",
