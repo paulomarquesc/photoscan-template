@@ -118,8 +118,8 @@ To
 * **photoscanSubnetAdressPrefix:** Photoscan subnet address prefix. Default Value: `10.0.1.0/24`
 * **adSubnetName:** Subnet where Domain Controllers will be deployed to. Default Value: `AD-SN`
 * **adSubnetAdressPrefix:** AD subnet address prefix. Default Value: `10.0.2.0/24`
-* **deployLinuxJumpbox:** Should this template deploy a Linux Jumpbox. Default Value: `yes`
-* **useBeeGfsStorage:** Should this template use BeeGfs storage. Default Value: `yes`
+* **deployLinuxJumpbox:** Should this template deploy a Linux Jumpbox. Default Value: `no`
+* **useBeeGfsStorage:** Should this template use BeeGfs storage. Default Value: `no`
 * **adminUsername:** Name of admin account of the VMs, this name cannot be well know names, like root, admin, administrator, guest, etc.
 * **adminPassword:** Admin password.
 * **dc1Name:** Domain Controller 1 Name. Default Value: `DC-01`
