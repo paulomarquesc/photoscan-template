@@ -84,6 +84,7 @@ function ConfigureDefaultPhotoscanRegKey
     # All new users
     Invoke-Expression "reg load hklm\defaultuser C:\USERS\DEFAULT\NTUSER.DAT"
    
+    Invoke-Expression "reg add ""hklm\defaultuser\Software\Agisoft\PhotoScan Pro\main"" /v project_absolute_paths /d 0 /t REG_DWORD /f"
     Invoke-Expression "reg add ""hklm\defaultuser\Software\Agisoft\PhotoScan Pro\main\network"" /v root_path /d $Root /f"
     Invoke-Expression "reg add ""hklm\defaultuser\Software\Agisoft\PhotoScan Pro\main\network"" /v host /d $Dispatch /f"
     Invoke-Expression "reg add ""hklm\defaultuser\Software\Agisoft\PhotoScan Pro\main\network"" /v enable /d 1 /t REG_DWORD /f"

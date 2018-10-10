@@ -70,14 +70,14 @@ install_photoscan_node_script_in_cron()
 {
 	echo "install_photoscan_node_script_in_cron"
 	! crontab -l > photoscan_cron
-	echo "@reboot xvfb-run $INSTALL_PATH/photoscan-pro/photoscan.sh --node --dispatch $DISPATCH --root $ROOT_PATH --gpu_mask $GPU_MASK --timestamp >/var/log/photoscanlog.txt 2>&1" >> photoscan_cron
+	echo "@reboot xvfb-run $INSTALL_PATH/photoscan-pro/photoscan.sh --node --dispatch $DISPATCH --root $ROOT_PATH --gpu_mask $GPU_MASK --timestamp --aboslute_paths $ABSOLUTE_PATHS >/var/log/photoscanlog.txt 2>&1" >> photoscan_cron
 	crontab photoscan_cron
 	rm photoscan_cron
 }
 
 start_photoscan()
 {
-	xvfb-run $INSTALL_PATH/photoscan-pro/photoscan.sh --node --dispatch $DISPATCH --root $ROOT_PATH --gpu_mask $GPU_MASK --timestamp >/var/log/photoscanlog.txt 2>&1 &
+	xvfb-run $INSTALL_PATH/photoscan-pro/photoscan.sh --node --dispatch $DISPATCH --root $ROOT_PATH --gpu_mask $GPU_MASK --timestamp --aboslute_paths $ABSOLUTE_PATHS >/var/log/photoscanlog.txt 2>&1 &
 }
 
 SETUP_MARKER=/var/local/install_photoscan_node.marker
