@@ -907,7 +907,7 @@
             "value": "[parameters('nodeNameSuffix')]"
           },
           "nodeRoot": {
-            "value": "[parameters('headRoot')]"
+            "value": "[parameters('nodeRoot')]"
           },
           "nodeSubnetIpAddressSuffix": {
             "value": "[parameters('nodeSubnetIpAddressSuffix')]"
