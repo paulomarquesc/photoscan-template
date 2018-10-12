@@ -252,21 +252,21 @@
     },
     "gpuNodesVmSize": {
       "type": "string",
-      "defaultValue": "Standard_NC6s_v2",
+      "defaultValue": "Standard_NC24s_v2",
       "metadata": {
         "description": "GPU VM Size."
       }
     },
     "gpuNodesCount": {
       "type": "int",
-      "defaultValue": 2,
+      "defaultValue": 5,
       "metadata": {
         "description": "Number of GPU VM Nodes."
       }
     },
     "headVmSize": {
       "type": "string",
-      "defaultValue": "Standard_D4S_v3",
+      "defaultValue": "Standard_D8S_v3",
       "metadata": {
         "description": "Head node VM Size."
       }
