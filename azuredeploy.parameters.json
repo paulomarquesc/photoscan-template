@@ -54,7 +54,7 @@
       "value":"TESTDOMAIN"
     },
     "deployLinuxJumpbox":{
-      "value":"yes"
+      "value":"no"
     },
     "useBeeGfsStorage":{
       "value":"yes"
@@ -84,22 +84,22 @@
       "value":"headnode"
     },
     "headVmSize": {
-      "value": "Standard_D4S_v3"
+      "value": "Standard_D8S_v3"
     },
     "workerNodesType":{
       "value": "linux"
     },
     "nodeNameSuffix":{
-      "value": "wgpunode"
+      "value": "lgpunode"
     },
     "nodeRoot": {
-      "value": "/beegfs/beegfsshare/Projects"
+      "value": "/beegfs/beegfsshare"
     },
     "nodeSubnetIpAddressSuffix":{
       "value": "10.0.1" 
     },
     "nodeStartIpAddress":{
-      "value":30
+      "value":40
     },
     "dispatch": {
       "value": "10.0.1.250"
@@ -108,10 +108,10 @@
       "value": 15
     },
     "gpuNodesCount": {
-      "value": 4
+      "value": 5
     },
     "gpuNodesVmSize": {
-      "value": "Standard_NC6s_v2"
+      "value": "Standard_NC24s_v2"
     },
     "beeGfsVnetRG": {
       "value": "beegfs-rg-eus"
