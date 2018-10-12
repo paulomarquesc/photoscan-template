@@ -487,7 +487,7 @@
   },
   "resources": [
     {
-      "condition": false,
+      "condition": true,
       "comments": "Virtual network deployment",
       "name": "[concat(variables('deploymentUniqueString'),'-Networking')]",
       "type": "Microsoft.Resources/deployments",
@@ -534,7 +534,7 @@
       }
     },
     {
-      "condition": false,
+      "condition": true,
       "comments": "Active Directory Forest Deployment",
       "name": "[concat(variables('deploymentUniqueString'),'-AD')]",
       "type": "Microsoft.Resources/deployments",
@@ -614,7 +614,7 @@
       }
     },
     {
-      "condition": false,
+      "condition": true,
       "comments": "Jumpbox Deployment",
       "name": "[concat(variables('deploymentUniqueString'),'-Jumpbox')]",
       "type": "Microsoft.Resources/deployments",
@@ -691,7 +691,7 @@
       }
     },
     {
-      "condition": false,
+      "condition": true,
       "comments": "Windows Photoscan Head Deployment",
       "name": "[concat(variables('deploymentUniqueString'),'-Head')]",
       "type": "Microsoft.Resources/deployments",
