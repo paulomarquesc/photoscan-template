@@ -118,7 +118,7 @@ To
 * **photoscanSubnetAdressPrefix:** Photoscan subnet address prefix. Default Value: `10.0.1.0/24`
 * **adSubnetName:** Subnet where Domain Controllers will be deployed to. Default Value: `AD-SN`
 * **adSubnetAdressPrefix:** AD subnet address prefix. Default Value: `10.0.2.0/24`
-* **deployLinuxJumpbox:** Should this template deploy a Linux Jumpbox. Default Value: `no`
+* **deployLinuxJumpbox:** Should this template deploy a Linux Jumpbox. Default Value: `yes`
 * **useBeeGfsStorage:** Should this template use BeeGfs storage. Default Value: `yes`
 * **adminUsername:** Name of admin account of the VMs, this name cannot be well know names, like root, admin, administrator, guest, etc.
 * **adminPassword:** Admin password.
@@ -134,15 +134,16 @@ To
 * **activationCode:** Photoscan Activation Code.
 * **headServerName:** Photoscan Server (head) name. Default Value: `headnode`
 * **headRoot:** Root path where the projects are located for Server. Default Value: `\\beegfs\beegfsshare\Projects`
+* **workerNodesType:** OS type of worker nodes, Linux or Windows. Default Value: `linux`
 * **nodeNameSuffix:** Name suffix to be used in the GPU Nodes. Default Value: `workernode`
 * **nodeRoot:** Root path where the projects are located for Nodes. Default Value: `/beegfs/beegfsshare/Projects`
 * **nodeSubnetIpAddressSuffix:** Nodes will have static Ip addresses, this is the network part of a class C subnet. Default Value: `10.0.1`
 * **nodeStartIpAddress:** Nodes will have static Ip addresses, this is the start number of the host part of the class C ip address. Default Value: `20`
 * **dispatch:** Ip address of the photoscan server (head). Default Value: `10.0.1.250`
 * **gpuMask:** Decimal represention of how many GPUs will be enabled for processing. E.g. 15 means 1111, that is equal to 4 GPUs. Default Value: `15`
-* **gpuNodesVmSize:** GPU VM Size. Default Value: `Standard_NC6s_v2`
-* **gpuNodesCount:** Number of GPU VM Nodes. Default Value: `2`
-* **headVmSize:** Head node VM Size. Default Value: `Standard_D4S_v3`
+* **gpuNodesVmSize:** GPU VM Size. Default Value: `Standard_NC24s_v2`
+* **gpuNodesCount:** Number of GPU VM Nodes. Default Value: `5`
+* **headVmSize:** Head node VM Size. Default Value: `Standard_D8S_v3`
 * **beeGfsVnetRG:** BeeGFS Vnet Resoure group name. Default Value: `beegfs-rg-eus`
 * **beeGfsVnetName:** BeeGFS Virtual Network name. Default Value: `beegfs-vnet`
 * **linuxPhotoscanDownloadUrl:** Photoscan Linux binaries download URL. Default Value: `http://download.agisoft.com/photoscan-pro_1_4_4_amd64.tar.gz`
