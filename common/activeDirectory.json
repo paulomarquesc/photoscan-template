@@ -65,14 +65,14 @@
         },
         "dnsDomainName": {
             "type": "string",
-            "defaultValue": "sofstest.local",
+            "defaultValue": "testdomain.local",
             "metadata": {
                 "description": "DNS domain name use to build the host's FQDN."
             }
         },
         "adDomainNetBIOSName": {
             "type": "string",
-            "defaultValue": "sofs",
+            "defaultValue": "TESTDOMAIN",
             "metadata": {
                 "description": "NetBIOS domain name for Active Directory deployment."
             }
@@ -81,8 +81,7 @@
             "type": "string",
             "metadata": {
                 "description": "Name of admin account of the VMs, this name cannot be well know names, like root, admin, administrator, guest, etc."
-            },
-            "defaultValue": "sofsadmin"
+            }
         },
         "adminPassword": {
             "type": "securestring",
