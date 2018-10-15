@@ -7,7 +7,7 @@
       "metadata": {
         "description": "Location where the resources of this template will be deployed to"
       },
-      "defaultValue": "westus2"
+      "defaultValue": "eastus"
     },
     "deploymentConfig": {
       "type":"object",
