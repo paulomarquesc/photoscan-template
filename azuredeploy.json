@@ -480,9 +480,8 @@
     "resourceGroups": {
       "networkingRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'),resourceGroup().Name, 'photoscan-rg')]",
       "jumpBoxRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'photoscan-rg')]",
-      "sofsRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'photoscan-rg')]",
       "adRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'photoscan-rg')]",
-      "clientsRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'photoscan-rg')]"
+      "photoscanRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'photoscan-rg')]"
     }
   },
   "resources": [
@@ -696,7 +695,7 @@
       "name": "[concat(variables('deploymentUniqueString'),'-Head')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "[variables('deploymentConfig').apiVersions.deploymentApiVersion]",
-      "resourceGroup": "[variables('resourceGroups').clientsRg]",
+      "resourceGroup": "[variables('resourceGroups').photoscanRg]",
       "dependsOn": [
         "[concat(variables('deploymentUniqueString'),'-AD')]"
       ],
@@ -770,7 +769,7 @@
       "name": "[if(equals(parameters('workerNodesType'),'linux'),concat(variables('deploymentUniqueString'),'-LinuxNodes'),concat(variables('deploymentUniqueString'),'-LinuxNodes-Invalid'))]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "[variables('deploymentConfig').apiVersions.deploymentApiVersion]",
-      "resourceGroup": "[variables('resourceGroups').clientsRg]",
+      "resourceGroup": "[variables('resourceGroups').photoscanRg]",
       "dependsOn": [
         "[concat(variables('deploymentUniqueString'),'-AD')]"
       ],
@@ -856,7 +855,7 @@
       "name": "[if(equals(parameters('workerNodesType'),'windows'),concat(variables('deploymentUniqueString'),'-WindowsNodes'),concat(variables('deploymentUniqueString'),'-WindowsNodes-Invalid'))]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "[variables('deploymentConfig').apiVersions.deploymentApiVersion]",
-      "resourceGroup": "[variables('resourceGroups').clientsRg]",
+      "resourceGroup": "[variables('resourceGroups').photoscanRg]",
       "dependsOn": [
         "[concat(variables('deploymentUniqueString'),'-AD')]"
       ],
@@ -942,7 +941,7 @@
       "name": "[concat(variables('deploymentUniqueString'),'-nodes-attach-BeeGFS')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "[variables('deploymentConfig').apiVersions.deploymentApiVersion]",
-      "resourceGroup": "[variables('resourceGroups').clientsRg]",
+      "resourceGroup": "[variables('resourceGroups').photoscanRg]",
       "dependsOn": [
         "[if(equals(parameters('workerNodesType'),'linux'),concat(variables('deploymentUniqueString'),'-LinuxNodes'),concat(variables('deploymentUniqueString'),'-LinuxNodes-Invalid'))]"
       ],
