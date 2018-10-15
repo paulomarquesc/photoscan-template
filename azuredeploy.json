@@ -936,7 +936,7 @@
       }
     },
     {
-      "condition": "[equals(parameters('useBeeGfsStorage'),'yes')]",
+      "condition": "[and(equals(parameters('useBeeGfsStorage'),'yes'),equals(parameters('workerNodesType'),'linux'))]",
       "comments": "Configure Linux Nodes to use BeeGFS",
       "name": "[concat(variables('deploymentUniqueString'),'-nodes-attach-BeeGFS')]",
       "type": "Microsoft.Resources/deployments",
