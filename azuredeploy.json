@@ -88,17 +88,6 @@
       ],
       "defaultValue": "yes"
     },
-    "useBeeGfsStorage": {
-      "type": "string",
-      "metadata": {
-        "description": "Should this template use BeeGfs storage"
-      },
-      "allowedValues": [
-        "yes",
-        "no"
-      ],
-      "defaultValue": "yes"
-    },
     "adminUsername": {
       "type": "string",
       "metadata": {
@@ -270,6 +259,49 @@
       "metadata": {
         "description": "Head node VM Size."
       }
+    },
+    "useBeeGfsStorage": {
+      "type": "string",
+      "metadata": {
+        "description": "Should this template use BeeGfs storage. If this parameter is set to 'yes', make sure useNfsStorage is set to 'no'"
+      },
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "defaultValue": "yes"
+    },
+    "useNfsStorage": {
+      "type": "string",
+      "metadata": {
+        "description": "Should this template use Nfs storage. If this parameter is set to 'yes', make sure useBeeGfsStorage is set to 'no'"
+      },
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "defaultValue": "no"
+    },
+    "nfsDnsEntry": {
+      "type": "string",
+      "metadata": {
+        "description": "If useNfsStorage is set to 'yes', this parameter with correct values is mandatory. Format is <DNS A Record for NFS servers>,<IP1>,<IP2>,<IP3>,<IPx>. E.g. vfxt,10.0.0.11,10.0.0.12,10.0.0.13"
+      },
+      "defaultValue": ""
+    },
+    "nfsHomeExportPath": {
+      "type": "string",
+      "metadata": {
+        "description": "If useNfsStorage is set to 'yes', this parameter with correct values is mandatory. This is the export path configured in your NFS server for home folder of HPC User."
+      },
+      "defaultValue": "/home"
+    },
+    "nfsScratchExportPath": {
+      "type": "string",
+      "metadata": {
+        "description": "If useNfsStorage is set to 'yes', this parameter with correct values is mandatory. This is the export path configured in your NFS server to be used by Photoscan for project processing."
+      },
+      "defaultValue": "/data"
     },
     "storageVnetRG": {
       "type": "string",
@@ -608,6 +640,12 @@
           },
           "beeGfsMasterIpAddress": {
             "value": "[parameters('beeGfsMasterIpAddress')]"
+          },
+          "useNfsStorage": {
+            "value":"[parameters('useNfsStorage')]"
+          },
+          "nfsDnsEntry": {
+            "value": "[parameters('nfsDnsEntry')]"
           }
         }
       }

@@ -56,9 +56,6 @@
     "deployLinuxJumpbox": {
       "value": "no"
     },
-    "useBeeGfsStorage": {
-      "value": "yes"
-    },
     "windowsJumpboxVmName": {
       "value": "wjb-01"
     },
@@ -113,6 +110,21 @@
     "gpuNodesVmSize": {
       "value": "Standard_NC24s_v2"
     },
+    "useBeeGfsStorage": {
+      "value": "yes"
+    },
+    "useNfsStorage": {
+      "value": "no"
+    },
+    "nfsDnsEntry": {
+      "vlaue": ""
+    },
+    "nfsHomeExportPath": {
+      "value": "/home"
+    },
+    "nfsScratchExportPath": {
+      "value": "/data"
+    },
     "storageVnetRG": {
       "value": "beegfs-rg-eus"
     },
@@ -148,12 +160,6 @@
     },
     "nfsSharedStorageHpcUserHomeFolder": {
       "value": "/mnt/beegfshome"
-    },
-    "nfsHomeExportPath": {
-      "value": "/home"
-    },
-    "nfsScratchExportPath": {
-      "value": "/data"
     },
     "hpcUser": {
       "value": "hpcuser"

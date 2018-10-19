@@ -128,13 +128,31 @@
         "adSubnetName": {
             "type": "string",
             "metadata": {
-              "description": "Subnet where Domain Controllers will be deployed to"
+                "description": "Subnet where Domain Controllers will be deployed to"
             },
             "defaultValue": "AD-SN"
+        },
+        "useNfsStorage": {
+            "type": "string",
+            "metadata": {
+                "description": "Should this template use Nfs storage. If this parameter is set to 'yes', make sure useBeeGfsStorage is set to 'no'"
+            },
+            "allowedValues": [
+                "yes",
+                "no"
+            ],
+            "defaultValue": "no"
+        },
+        "nfsDnsEntry": {
+            "type": "string",
+            "metadata": {
+              "description": "If useNfsStorage is set to 'yes', this parameter with correct values is mandatory. Format is <DNS A Record for NFS servers>,<IP1>,<IP2>,<IP3>,<IPx>. E.g. vfxt,10.0.0.11,10.0.0.12,10.0.0.13"
+            },
+            "defaultValue": ""
           }
     },
     "variables": {
-        "installParams": "[concat(' -BeeGfsSmbServersVip ', parameters('beeGfsSmbServersVip'), ' -BeeGfsARecordName ', parameters('beeGfsSmbServerARecordName'), ' -BeeGfMasterARecordName ', parameters('beeGfsMasterName'), ' -BeeGfMasterIpAddress ',  parameters('beeGfsMasterIpAddress'), ' -domainName ', parameters('dnsDomainName'))]",
+        "installParams": "[if(equals(parameters('useNfsStorage'),'no'), concat(' -BeeGfsSmbServersVip ', parameters('beeGfsSmbServersVip'), ' -BeeGfsARecordName ', parameters('beeGfsSmbServerARecordName'), ' -BeeGfMasterARecordName ', parameters('beeGfsMasterName'), ' -BeeGfMasterIpAddress ',  parameters('beeGfsMasterIpAddress'), ' -domainName ', parameters('dnsDomainName')),concat(' -domainName ', parameters('dnsDomainName'), ' -NfsDnsEntry ', parameters('nfsDnsEntry')))]",
         "deploymentUniqueString": "[uniqueString(concat(deployment().name,resourceGroup().id))]",
         "faultDomains": 2,
         "updateDomains": 5,
@@ -169,7 +187,7 @@
                 "storageAccountType": "Premium_LRS",
                 "subnetId": "[concat(variables('vnetId'),'/subnets/',parameters('adSubnetName'))]",
                 "vmSize": "[parameters('dcVmSize')]",
-                "privateIpAddress":  "[parameters('dc2IpAddress')]",
+                "privateIpAddress": "[parameters('dc2IpAddress')]",
                 "dataDiskSizeGb": 30,
                 "availabilitySetId": "[resourceId('Microsoft.Compute/availabilitySets',variables('avSetInfo')[0].availabilitySetName)]",
                 "imageInfo": {
