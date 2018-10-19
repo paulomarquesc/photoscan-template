@@ -36,6 +36,9 @@ $localInstallPath = Join-Path $scriptPath ([system.io.path]::GetFileName($Downlo
 $InstalledPhotoScanPath="C:\program files\agisoft\photoscan pro"
 $PhotoScanExecutable="photoscan.exe"
 
+# Changing "\" for "/" as recommended by Agisoft 
+$Root = $Root.Replace("\","/")
+
 function DownloadPhotoScan
 {
     Write-Verbose "Downloading photoscan from $DownloadUrl..." -Verbose
