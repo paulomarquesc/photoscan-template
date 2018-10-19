@@ -144,14 +144,14 @@ To
 * **gpuNodesVmSize:** GPU VM Size. Default Value: `Standard_NC24s_v2`
 * **gpuNodesCount:** Number of GPU VM Nodes. Default Value: `5`
 * **headVmSize:** Head node VM Size. Default Value: `Standard_D8S_v3`
-* **beeGfsVnetRG:** BeeGFS Vnet Resoure group name. Default Value: `beegfs-rg-eus`
-* **beeGfsVnetName:** BeeGFS Virtual Network name. Default Value: `beegfs-vnet`
+* **storageVnetRG:** Storage Vnet Resoure group name. Default Value: `beegfs-rg-eus`
+* **storageVnetName:** Srorage Virtual Network name. Default Value: `beegfs-vnet`
 * **linuxPhotoscanDownloadUrl:** Photoscan Linux binaries download URL. Default Value: `http://download.agisoft.com/photoscan-pro_1_4_4_amd64.tar.gz`
 * **windowsPhotoscanDownloadUrl:** Windows binary Photoscan download URL. Default Value: `http://download.agisoft.com/photoscan-pro_1_4_4_x64.msi`
 * **photoscanInstallPath:** Photoscan installation path. Default Value: `/`
 * **beeGfsMasterName:** BeeGFS Master node VM name (single label). Default Value: `beegfsmaster`
 * **beeGfsMasterIpAddress:** BeeGFS Master Ip address, this will be added as an A record on DNS. Default Value: `192.168.0.4`
-* **beeGfsMountPoint:** Folder path where BeeGFS volume will be mounted. Default Value: `/beegfs`
+* **sharedStorageMountPoint:** Folder path where Shared Storage volume will be mounted on Linux VMs.. Default Value: `/beegfs`
 * **beeGfsSmbServersVip:** Ip Address of the BeeGFS SMB clients Load Balancer,this will be added as an A record on DNS. Default Value: `192.168.0.55`
 * **beeGfsSmbServerARecordName:** BeeGFS A record to be used by Photoscan Server (Head). Default Value: `beegfs`
 * **photoscanAbsolutePaths:** Use Photoscan absolute paths. 0 = No, 1= Yes. Default Value: `0`
@@ -161,7 +161,7 @@ To
 * **linuxJumpboxVmName:** Linux Jumpbox VM Name. Default Value: `ljb-01`
 * **windowsJumpboxIpAddress:** Windows Jumpbox VM Ip Address. Default Value: `10.0.0.4`
 * **linuxJumpboxIpAddress:** Linux Jumpbox VM Ip Address. Default Value: `10.0.0.5`
-* **beegfsHpcUserHomeFolder:** This indicates beegfs mount point on master and storage+meta nodes for the hpcuser home folder, mounted on all nodes. Default Value: `/mnt/beegfshome`
+* **nfsSharedStorageHpcUserHomeFolder:** This indicates shared storage mount point on Linux VM nodes for the hpcuser home folder, it will be mounted on all Linux nodes. Default Value: `/mnt/beegfshome`
 * **hpcUser:** Hpc user that will be owner of all files in the hpc folder structure. Default Value: `hpcuser`
 * **hpcUid:** Hpc User ID. Default Value: `7007`
 * **hpcGroup:** Hpc Group. Default Value: `hpcgroup`
