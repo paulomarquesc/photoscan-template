@@ -33,6 +33,17 @@ if [[ ! -z "${7:-}" ]]; then
 	ABSOLUTE_PATHS="$7"
 fi
 
+# User
+HPC_USER=hpcuser
+if [[ ! -z "${8:-}" ]]; then
+	HPC_USER="$8"
+fi
+
+HPC_GROUP="hpcgroup"
+if [[ ! -z "${9:-}" ]]; then
+	HPC_GROUP="${9}"
+fi
+
 PHOTOSCAN_TAR_FILE_NAME=$(echo $DOWNLOAD_PATH | awk -F/ '{print $4}')
 
 echo "Starting script with following values:"
@@ -44,7 +55,14 @@ echo "GPU_MASK.................: $GPU_MASK"
 echo "INSTALL_PATH.............: $INSTALL_PATH"
 echo "ABSOLUTE_PATHS...........: $ABSOLUTE_PATHS"
 echo "PHOTOSCAN_TAR_FILE_NAME..: $PHOTOSCAN_TAR_FILE_NAME"
+echo "HPC_USER..: $HPC_USER"
+echo "HPC_GROUP..: $HPC_GROUP"
 
+if [ $INSTALL_PATH -eq "/" ]; then
+	PHOTOSCAN_FOLDER="/photoscan-pro"
+else
+	PHOTOSCAN_FOLDER="$INSTALL_PATH/photoscan-pro"
+fi
 
 install_prereqs()
 {
@@ -59,25 +77,28 @@ download_photoscan()
 
 	wget -O ./$PHOTOSCAN_TAR_FILE_NAME $DOWNLOAD_PATH
 	tar -xvzf ./$PHOTOSCAN_TAR_FILE_NAME --directory $INSTALL_PATH
+
+	chmod 775 -R $PHOTOSCAN_FOLDER
+	chown -R $HPC_USER:$HPC_GROUP $PHOTOSCAN_FOLDER
 }
 
 activate_photoscan()
 {
-	$INSTALL_PATH/photoscan-pro/photoscan.sh --activate $ACTIVATION_CODE
+	$PHOTOSCAN_FOLDER/photoscan.sh --activate $ACTIVATION_CODE
 }
 
 install_photoscan_node_script_in_cron()
 {
 	echo "install_photoscan_node_script_in_cron"
 	! crontab -l > photoscan_cron
-	echo "@reboot xvfb-run $INSTALL_PATH/photoscan-pro/photoscan.sh --node --dispatch $DISPATCH --root $ROOT_PATH --gpu_mask $GPU_MASK --timestamp --aboslute_paths $ABSOLUTE_PATHS >/var/log/photoscanlog.txt 2>&1" >> photoscan_cron
+	echo "@reboot sudo -H -u $HPC_USER bash -c 'xvfb-run $PHOTOSCAN_FOLDER/photoscan.sh --node --dispatch $DISPATCH --root $ROOT_PATH --gpu_mask $GPU_MASK --timestamp --aboslute_paths $ABSOLUTE_PATHS'" >> photoscan_cron
 	crontab photoscan_cron
 	rm photoscan_cron
 }
 
 start_photoscan()
 {
-	xvfb-run $INSTALL_PATH/photoscan-pro/photoscan.sh --node --dispatch $DISPATCH --root $ROOT_PATH --gpu_mask $GPU_MASK --timestamp --aboslute_paths $ABSOLUTE_PATHS >/var/log/photoscanlog.txt 2>&1 &
+	sudo -H -u $HPC_USER bash -c "xvfb-run $PHOTOSCAN_FOLDER/photoscan.sh --node --dispatch $DISPATCH --root $ROOT_PATH --gpu_mask $GPU_MASK --timestamp --absolute_paths $ABSOLUTE_PATHS" &
 }
 
 SETUP_MARKER=/var/local/install_photoscan_node.marker
@@ -88,7 +109,7 @@ fi
 
 # Disable SELinux
 sed -i 's/SELINUX=.*/SELINUX=disabled/g' /etc/selinux/config
-setenforce 0
+! setenforce 0
 
 # Disable tty requirement for sudo
 sed -i 's/^Defaults[ ]*requiretty/# Defaults requiretty/g' /etc/sudoers

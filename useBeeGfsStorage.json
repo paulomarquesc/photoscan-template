@@ -53,16 +53,16 @@
         "description": "Number of GPU VM Nodes."
       }
     },
-    "beeGfsVnetRG": {
+    "storageVnetRG": {
       "type": "string",
       "metadata": {
-        "description": "BeeGFS Vnet Resoure group name"
+        "description": "Storage Vnet Resoure group name"
       }
     },
-    "beeGfsVnetName": {
+    "storageVnetName": {
       "type": "string",
       "metadata": {
-        "description": "BeeGFS Virtual Network name"
+        "description": "Srorage Virtual Network name"
       }
     },
     "deploymentConfig": {
@@ -77,16 +77,16 @@
         "description": "Object that contains library paths, api versions, SAS token, from master template."
       }
     },
-    "beeGfsMountPoint":{
+    "sharedStorageMountPoint":{
       "type": "string",
       "metadata": {
-        "description": "Folder path where BeeGFS volume will be mounted"
+        "description": "Folder path where Shared Storage volume will be mounted on Linux VMs."
       }
     },
-    "beegfsHpcUserHomeFolder": {
+    "nfsSharedStorageHpcUserHomeFolder": {
       "type": "string",
       "metadata": {
-        "description": "This indicates beegfs mount point on master and storage+meta nodes for the hpcuser home folder, mounted on all nodes."
+        "description": "This indicates shared storage mount point on Linux VM nodes for the hpcuser home folder, it will mounted on all Linux nodes."
       }
     },
     "hpcUser": {
@@ -116,9 +116,9 @@
   },
   "variables": {
     "deploymentUniqueString": "[uniqueString(concat(deployment().name,resourceGroup().id))]",
-    "peering1Name": "[concat(parameters('vnetName'),'-peerto-',parameters('beeGfsVnetName'))]",
-    "peering2Name": "[concat(parameters('beeGfsVnetName'),'-peerto-',parameters('vnetName'))]",
-    "installParams": "[concat(parameters('beeGfsMasterName'),' ', parameters('beeGfsMountPoint'),' ', parameters('beegfsHpcUserHomeFolder'), ' ',  parameters('hpcUser'), ' ',  parameters('hpcUid'), ' ',  parameters('hpcGroup'),' ',  parameters('hpcGid'), ' ', parameters('dnsDomainName'))]",
+    "peering1Name": "[concat(parameters('vnetName'),'-peerto-',parameters('storageVnetName'))]",
+    "peering2Name": "[concat(parameters('storageVnetName'),'-peerto-',parameters('vnetName'))]",
+    "installParams": "[concat(parameters('beeGfsMasterName'),' ', parameters('sharedStorageMountPoint'),' ', parameters('nfsSharedStorageHpcUserHomeFolder'), ' ',  parameters('hpcUser'), ' ',  parameters('hpcUid'), ' ',  parameters('hpcGroup'),' ',  parameters('hpcGid'), ' ', parameters('dnsDomainName'))]",
     "gpuNodesVMsList": {
       "copy": [
         {
@@ -156,7 +156,7 @@
                 "allowGatewayTransit": "false",
                 "useRemoteGateways": "false",
                 "remoteVirtualNetwork": {
-                  "id": "[resourceId(parameters('beeGfsVnetRG'),'Microsoft.Network/virtualNetworks',parameters('beeGfsVnetName'))]"
+                  "id": "[resourceId(parameters('storageVnetRG'),'Microsoft.Network/virtualNetworks',parameters('storageVnetName'))]"
                 }
               }
             }
@@ -170,7 +170,7 @@
       "name": "[concat(variables('deploymentUniqueString'),'-Peering2-PeeringDeployment')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "[parameters('deploymentConfig').apiVersions.deploymentApiVersion]",
-      "resourceGroup": "[parameters('beeGfsVnetRG')]",
+      "resourceGroup": "[parameters('storageVnetRG')]",
       "properties": {
         "mode": "Incremental",
         "template": {
@@ -179,7 +179,7 @@
           "resources": [
             {
               "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
-              "name": "[concat(parameters('beeGfsVnetName'),'/',variables('peering2Name'))]",
+              "name": "[concat(parameters('storageVnetName'),'/',variables('peering2Name'))]",
               "apiVersion": "[parameters('deploymentConfig').apiVersions.vnetPeeringApiVersion]",
               "location": "[parameters('location')]",
               "properties": {

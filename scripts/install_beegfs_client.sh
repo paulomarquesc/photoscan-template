@@ -8,7 +8,7 @@ if [[ $(id -u) -ne 0 ]] ; then
 fi
 
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 <ManagementHost> <Mount> <BeegfsHpcUserHomeFolder> <HpcUser> <HpcUID> <HpcGroup> <HpcGID> <customDomain>"
+    echo "Usage: $0 <ManagementHost> <Mount> <nfsSharedStorageHpcUserHomeFolder> <HpcUser> <HpcUID> <HpcGroup> <HpcGID> <customDomain>"
     exit 1
 fi
 
@@ -191,7 +191,7 @@ echo "End"
 shutdown -r +1
 EOF
 	chmod 700 /root/lis_install.sh
-	crontab -l > LIScron
+	! crontab -l > LIScron
 	echo "@reboot /root/lis_install.sh >>/root/log.txt" >> LIScron
 	crontab LIScron
 	rm LIScron

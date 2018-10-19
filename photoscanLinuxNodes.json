@@ -144,13 +144,25 @@
       "metadata": {
         "description": "Use Photoscan absolute paths. 0 = No, 1 = Yes."
       }
+    },
+    "hpcUser": {
+      "type": "string",
+      "metadata": {
+        "description": "Hpc user that will be owner of all files in the hpc folder structure."
+      }
+    },
+    "hpcGroup": {
+      "type": "string",
+      "metadata": {
+        "description": "Hpc Group."
+      }
     }
   },
   "variables": {
     "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
     "vnetId": "[resourceId(parameters('vnetRg'),'Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
     "subnetId": "[concat(variables('vnetId'),'/subnets/',parameters('photoscanSubnetName'))]",
-    "installParams": "[concat(parameters('activationCode'),' ',parameters('linuxPhotoscanDownloadUrl'),' ',parameters('dispatch'),' ',parameters('nodeRoot'),' ',parameters('gpuMask'),' ',parameters('photoscanInstallPath'),' ',parameters('photoscanAbsolutePaths'))]",
+    "installParams": "[concat(parameters('activationCode'),' ',parameters('linuxPhotoscanDownloadUrl'),' ',parameters('dispatch'),' ',parameters('nodeRoot'),' ',parameters('gpuMask'),' ',parameters('photoscanInstallPath'),' ',parameters('photoscanAbsolutePaths'),' ',parameters('hpcUser'),' ',parameters('hpcGroup'))]",
     "avSetInfo": [
       {
         "availabilitySetName": "LinuxNodes-AvSet",

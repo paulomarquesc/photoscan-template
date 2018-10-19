@@ -2,35 +2,35 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "adminUsername": {
+      "value": ""
+    },
     "sshKeyData": {
       "value": ""
     },
-    "adminUsername":{
-      "value": ""
-    },
-    "vnetName":{
+    "vnetName": {
       "value": "photoscan-vnet"
     },
-    "vnetAdressSpace":{
-      "value":"10.0.0.0/16"
+    "vnetAdressSpace": {
+      "value": "10.0.0.0/16"
     },
     "jumpboxSubnetName": {
-        "value":"JumpBox-SN"
-      },
+      "value": "JumpBox-SN"
+    },
     "jumpboxSubnetAdressPrefix": {
-      "value":"10.0.0.0/24"
+      "value": "10.0.0.0/24"
     },
     "photoscanSubnetName": {
-      "value":"Photoscan-SN"
+      "value": "Photoscan-SN"
     },
     "photoscanSubnetAdressPrefix": {
-      "value":"10.0.1.0/24"
+      "value": "10.0.1.0/24"
     },
     "adSubnetName": {
-      "value":"AD-SN"
+      "value": "AD-SN"
     },
     "adSubnetAdressPrefix": {
-      "value":"10.0.2.0/24"
+      "value": "10.0.2.0/24"
     },
     "dc1Name": {
       "value": "dc-01"
@@ -39,31 +39,31 @@
       "value": "dc-02"
     },
     "dc1IpAddress": {
-      "value":  "10.0.2.4"
+      "value": "10.0.2.4"
     },
     "dc2IpAddress": {
-      "value":  "10.0.2.5"
+      "value": "10.0.2.5"
     },
     "dcVmSize": {
       "value": "Standard_DS2_v2"
     },
-    "dnsDomainName":{
-      "value":"testdomain.local"
+    "dnsDomainName": {
+      "value": "testdomain.local"
     },
-    "adDomainNetBIOSName":{
-      "value":"TESTDOMAIN"
+    "adDomainNetBIOSName": {
+      "value": "TESTDOMAIN"
     },
-    "deployLinuxJumpbox":{
-      "value":"no"
+    "deployLinuxJumpbox": {
+      "value": "no"
     },
-    "useBeeGfsStorage":{
-      "value":"yes"
+    "useBeeGfsStorage": {
+      "value": "yes"
     },
-    "windowsJumpboxVmName":{
-      "value":"wjb-01"
+    "windowsJumpboxVmName": {
+      "value": "wjb-01"
     },
-    "linuxJumpboxVmName":{
-      "value":"ljb-01"
+    "linuxJumpboxVmName": {
+      "value": "ljb-01"
     },
     "windowsJumpboxVmSize": {
       "value": "Standard_DS2_v2"
@@ -71,35 +71,35 @@
     "linuxJumpboxVmSize": {
       "value": "Standard_DS2_v2"
     },
-    "windowsJumpboxIpAddress":{
-      "value":"10.0.0.4"
+    "windowsJumpboxIpAddress": {
+      "value": "10.0.0.4"
     },
-    "linuxJumpboxIpAddress":{
-      "value":"10.0.0.5"
+    "linuxJumpboxIpAddress": {
+      "value": "10.0.0.5"
     },
     "headRoot": {
       "value": "\\\\beegfs\\beegfsshare\\Projects"
     },
-    "headServerName":{
-      "value":"headnode"
+    "headServerName": {
+      "value": "headnode"
     },
     "headVmSize": {
       "value": "Standard_D8S_v3"
     },
-    "workerNodesType":{
+    "workerNodesType": {
       "value": "linux"
     },
-    "nodeNameSuffix":{
+    "nodeNameSuffix": {
       "value": "lgpunode"
     },
     "nodeRoot": {
       "value": "/beegfs/beegfsshare"
     },
-    "nodeSubnetIpAddressSuffix":{
-      "value": "10.0.1" 
+    "nodeSubnetIpAddressSuffix": {
+      "value": "10.0.1"
     },
-    "nodeStartIpAddress":{
-      "value":40
+    "nodeStartIpAddress": {
+      "value": 40
     },
     "dispatch": {
       "value": "10.0.1.250"
@@ -108,15 +108,15 @@
       "value": 15
     },
     "gpuNodesCount": {
-      "value": 5
+      "value": 5  
     },
     "gpuNodesVmSize": {
       "value": "Standard_NC24s_v2"
     },
-    "beeGfsVnetRG": {
+    "storageVnetRG": {
       "value": "beegfs-rg-eus"
     },
-    "beeGfsVnetName": {
+    "storageVnetName": {
       "value": "beegfs-vnet"
     },
     "windowsPhotoscanDownloadUrl": {
@@ -134,20 +134,26 @@
     "beeGfsMasterIpAddress": {
       "value": "192.168.0.4"
     },
-    "beeGfsMountPoint": {
+    "sharedStorageMountPoint": {
       "value": "/beegfs"
     },
     "beeGfsSmbServersVip": {
-      "value":"192.168.0.55"
+      "value": "192.168.0.55"
     },
-    "beeGfsSmbServerARecordName":{
-      "value":"beegfs"
+    "beeGfsSmbServerARecordName": {
+      "value": "beegfs"
     },
-    "photoscanAbsolutePaths":{
-      "value":0
+    "photoscanAbsolutePaths": {
+      "value": 0
     },
-    "beegfsHpcUserHomeFolder": {
+    "nfsSharedStorageHpcUserHomeFolder": {
       "value": "/mnt/beegfshome"
+    },
+    "nfsHomeExportPath": {
+      "value": "/home"
+    },
+    "nfsScratchExportPath": {
+      "value": "/data"
     },
     "hpcUser": {
       "value": "hpcuser"

@@ -271,18 +271,18 @@
         "description": "Head node VM Size."
       }
     },
-    "beeGfsVnetRG": {
+    "storageVnetRG": {
       "type": "string",
       "defaultValue": "beegfs-rg-eus",
       "metadata": {
-        "description": "BeeGFS Vnet Resoure group name."
+        "description": "Storage Vnet Resoure group name."
       }
     },
-    "beeGfsVnetName": {
+    "storageVnetName": {
       "type": "string",
       "defaultValue": "beegfs-vnet",
       "metadata": {
-        "description": "BeeGFS Virtual Network name."
+        "description": "Srorage Virtual Network name."
       }
     },
     "linuxPhotoscanDownloadUrl": {
@@ -320,10 +320,10 @@
         "description": "BeeGFS Master Ip address, this will be added as an A record on DNS."
       }
     },
-    "beeGfsMountPoint": {
+    "sharedStorageMountPoint": {
       "type": "string",
       "metadata": {
-        "description": "Folder path where BeeGFS volume will be mounted."
+        "description": "Folder path where Shared Storage volume will be mounted on Linux VMs.."
       },
       "defaultValue": "/beegfs"
     },
@@ -394,11 +394,11 @@
       },
       "defaultValue": "10.0.0.5"
     },
-    "beegfsHpcUserHomeFolder": {
+    "nfsSharedStorageHpcUserHomeFolder": {
       "type": "string",
       "defaultValue": "/mnt/beegfshome",
       "metadata": {
-        "description": "This indicates beegfs mount point on master and storage+meta nodes for the hpcuser home folder, mounted on all nodes."
+        "description": "This indicates shared storage mount point on Linux VM nodes for the hpcuser home folder, it will mounted on all Linux nodes."
       }
     },
     "hpcUser": {
@@ -931,6 +931,12 @@
           },
           "photoscanAbsolutePaths": {
             "value": "[parameters('photoscanAbsolutePaths')]"
+          },
+          "hpcUser": {
+            "value": "[parameters('hpcUser')]"
+          },
+          "hpcGroup": {
+            "value": "[parameters('hpcGroup')]"
           }
         }
       }
@@ -979,20 +985,20 @@
           "vnetRg": {
             "value": "[variables('resourceGroups').networkingRg]"
           },
-          "beeGfsVnetRG": {
-            "value": "[parameters('beeGfsVnetRG')]"
+          "storageVnetRG": {
+            "value": "[parameters('storageVnetRG')]"
           },
-          "beeGfsVnetName": {
-            "value": "[parameters('beeGfsVnetName')]"
+          "storageVnetName": {
+            "value": "[parameters('storageVnetName')]"
           },
           "beeGfsMasterName": {
             "value": "[parameters('beeGfsMasterName')]"
           },
-          "beeGfsMountPoint": {
-            "value": "[parameters('beeGfsMountPoint')]"
+          "sharedStorageMountPoint": {
+            "value": "[parameters('sharedStorageMountPoint')]"
           },
-          "beegfsHpcUserHomeFolder": {
-            "value": "[parameters('beegfsHpcUserHomeFolder')]"
+          "nfsSharedStorageHpcUserHomeFolder": {
+            "value": "[parameters('nfsSharedStorageHpcUserHomeFolder')]"
           },
           "hpcUser": {
             "value": "[parameters('hpcUser')]"
