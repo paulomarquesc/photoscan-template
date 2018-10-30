@@ -8,7 +8,7 @@ if [[ $(id -u) -ne 0 ]] ; then
 fi
 
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 <ManagementHost> <Mount> <nfsSharedStorageHpcUserHomeFolder> <HpcUser> <HpcUID> <HpcGroup> <HpcGID> <customDomain>"
+    echo "Usage: $0 <ManagementHost> <Mount> <nfsHomeExportPath> <nfsSharedStorageHpcUserHomeFolder> <hpcuser> <hpcgroup>"
     exit 1
 fi
 
@@ -20,35 +20,25 @@ if [[ ! -z "${2:-}" ]]; then
 	SHARE_SCRATCH=$2
 fi
 
-SHARE_HOME="/mnt/beegfshome"
+NFS_HOME_EXPORT="/mnt/beegfshome"
 if [[ ! -z "${3:-}" ]]; then
-	SHARE_HOME="$3"
+	NFS_HOME_EXPORT="$3"
+fi
+
+SHARE_HOME="/mnt/beegfshome"
+if [[ ! -z "${4:-}" ]]; then
+	SHARE_HOME="$4"
 fi
 
 # User
-HPC_USER=hpcuser
-if [[ ! -z "${4:-}" ]]; then
-	HPC_USER="$4"
-fi
-
-HPC_UID=7007
+HPC_USER="hpcuser"
 if [[ ! -z "${5:-}" ]]; then
-	HPC_UID=$5
+	HPC_USER="$5"
 fi
 
 HPC_GROUP="hpcgroup"
 if [[ ! -z "${6:-}" ]]; then
 	HPC_GROUP="${6}"
-fi
-
-HPC_GID=7007
-if [[ ! -z "${7:-}" ]]; then
-	HPC_GID=${7}
-fi
-
-CUSTOMDOMAIN=""
-if [[ ! -z "${8:-}" ]]; then
-	CUSTOMDOMAIN="${8}"
 fi
 
 BEEGFS_NODE_TYPE="client"
@@ -79,7 +69,7 @@ install_kernel_pkgs()
 	KERNEL_ROOT_URL="$KERNEL_LEVEL_URL/$RELEASE_DATE/`uname -r`"
 
 	KERNEL_PACKAGES=()
-	KERNEL_PACKAGES+=("$KERNEL_ROOT_URL/kernel-`uname -r | sed 's/.x86_64*//'`.src.rpm")
+	#KERNEL_PACKAGES+=("$KERNEL_ROOT_URL/kernel-`uname -r | sed 's/.x86_64*//'`.src.rpm")
 	KERNEL_PACKAGES+=("$KERNEL_ROOT_URL/kernel-devel-`uname -r`.rpm")
 	KERNEL_PACKAGES+=("$KERNEL_ROOT_URL/kernel-headers-`uname -r`.rpm")
 	KERNEL_PACKAGES+=("$KERNEL_ROOT_URL/kernel-tools-libs-devel-`uname -r`.rpm")
@@ -108,6 +98,10 @@ install_beegfs_repo()
 install_beegfs()
 {
 	if is_client; then
+	    if [ ! -e "$SHARE_SCRATCH" ]; then
+            mkdir -p $SHARE_SCRATCH
+        fi
+
 		yum install -y beegfs-client beegfs-helperd beegfs-utils
 		# setup client
 		sed -i 's/^sysMgmtdHost.*/sysMgmtdHost = '$MGMT_HOSTNAME'/g' /etc/beegfs/beegfs-client.conf
@@ -126,47 +120,62 @@ tune_tcp()
     echo "net.ipv4.neigh.default.gc_thresh3=4400" | sudo tee -a /etc/sysctl.conf
 }
 
-setup_domain()
+kill_hpcuser_process()
 {
-    if [[ -n "$CUSTOMDOMAIN" ]]; then
-
-		# surround domain names separated by comma with " after removing extra spaces
-		QUOTEDDOMAIN=$(echo $CUSTOMDOMAIN | sed -e 's/ //g' -e 's/"//g' -e 's/^\|$/"/g' -e 's/,/","/g')
-		echo $QUOTEDDOMAIN
-
-		echo "supersede domain-search $QUOTEDDOMAIN;" >> /etc/dhcp/dhclient.conf
-	fi
+    ps -aux | grep "$HPC_USER" | grep -v "grep" | grep -v "install_beegfs_client.sh" | awk '{print $2}' | while read pid; do kill -9 $pid || true; done
 }
 
 setup_user()
 {
     if [ ! -e "$SHARE_HOME" ]; then
-        mkdir -p $SHARE_HOME
+        sudo mkdir -p $SHARE_HOME
     fi
 
-    if [ ! -e "$SHARE_SCRATCH" ]; then
-        mkdir -p $SHARE_SCRATCH
-    fi
-
-	echo "$MGMT_HOSTNAME:$SHARE_HOME $SHARE_HOME    nfs4    rw,auto,_netdev 0 0" >> /etc/fstab
+	echo "$MGMT_HOSTNAME:$NFS_HOME_EXPORT $SHARE_HOME    nfs4 defaults 0 0" >> /etc/fstab
 	mount -a
 	mount
-   
-    groupadd -g $HPC_GID $HPC_GROUP
 
-    # Don't require password for HPC user sudo
-    echo "$HPC_USER ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-    
-    # Disable tty requirement for sudo
-    sed -i 's/^Defaults[ ]*requiretty/# Defaults requiretty/g' /etc/sudoers
+	RND_SECONDS=$(( RANDOM % (120 - 30 + 1 ) + 30 ))
+	echo "Sleeping $RND_SECONDS seconds before creating folders and ssh keys..."
+	sleep $RND_SECONDS
 
-	useradd -c "HPC User" -g $HPC_GROUP -d $SHARE_HOME/$HPC_USER -s /bin/bash -u $HPC_UID $HPC_USER -M
+    if [ ! -e "$SHARE_HOME/$HPC_USER" ]; then
+		
+		if [ ! -e "$SHARE_HOME/$HPC_USER/.ssh" ]; then
+			sudo mkdir -p $SHARE_HOME/$HPC_USER/.ssh
+		fi
+		
+		# Configure public key auth for the HPC user
+		sudo ssh-keygen -t rsa -f $SHARE_HOME/$HPC_USER/.ssh/id_rsa -q -P ""
+		cat $SHARE_HOME/$HPC_USER/.ssh/id_rsa.pub >> $SHARE_HOME/$HPC_USER/.ssh/authorized_keys
 
+		echo "Host *" > $SHARE_HOME/$HPC_USER/.ssh/config
+		echo "    StrictHostKeyChecking no" | sudo tee -a $SHARE_HOME/$HPC_USER/.ssh/config
+		echo "    UserKnownHostsFile /dev/null" | sudo tee -a $SHARE_HOME/$HPC_USER/.ssh/config
+		echo "    PasswordAuthentication no" | sudo tee -a $SHARE_HOME/$HPC_USER/.ssh/config
+
+		# Fix .ssh folder ownership
+		sudo chown -R $HPC_USER:$HPC_GROUP $SHARE_HOME/$HPC_USER
+
+		# Fix permissions
+		sudo chmod 700 $SHARE_HOME/$HPC_USER/.ssh
+		sudo chmod 644 $SHARE_HOME/$HPC_USER/.ssh/config
+		sudo chmod 644 $SHARE_HOME/$HPC_USER/.ssh/authorized_keys
+		sudo chmod 600 $SHARE_HOME/$HPC_USER/.ssh/id_rsa
+		sudo chmod 644 $SHARE_HOME/$HPC_USER/.ssh/id_rsa.pub
+    fi
+
+	echo "Killing any process that is executed by HPC User"
+	kill_hpcuser_process
+
+	echo "Change HPC User home folder to be from the shared storage"
+	sudo usermod -d $SHARE_HOME/$HPC_USER $HPC_USER
+	
 	# Allow HPC_USER to reboot
     echo "%$HPC_GROUP ALL=NOPASSWD: /sbin/shutdown" | (EDITOR="tee -a" visudo)
     echo $HPC_USER | tee -a /etc/shutdown.allow
-
 }
+
 
 download_lis()
 {
@@ -214,13 +223,12 @@ setenforce 0
 sed -i 's/^Defaults[ ]*requiretty/# Defaults requiretty/g' /etc/sudoers
 
 install_pkgs
-setup_user
 tune_tcp
-setup_domain
 install_beegfs_repo
 install_beegfs
 download_lis
 install_lis_in_cron
+setup_user
 
 # Create marker file so we know we're configured
 sudo touch $SETUP_MARKER

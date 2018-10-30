@@ -8,7 +8,7 @@ if [[ $(id -u) -ne 0 ]] ; then
 fi
 
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 <ActivationCode> <DownloadPath> <Dispatch> <RootPath> <GpuMask> <InstallPath> <absolute paths (0,1)>"
+    echo "Usage: $0 <ActivationCode> <DownloadPath> <Dispatch> <RootPath> <GpuMask> <InstallPath> <absolute paths (0,1)> <hpcUser> <hpcGroup> "
     exit 1
 fi
 
@@ -34,7 +34,7 @@ if [[ ! -z "${7:-}" ]]; then
 fi
 
 # User
-HPC_USER=hpcuser
+HPC_USER="hpcuser"
 if [[ ! -z "${8:-}" ]]; then
 	HPC_USER="$8"
 fi
@@ -58,7 +58,7 @@ echo "PHOTOSCAN_TAR_FILE_NAME..: $PHOTOSCAN_TAR_FILE_NAME"
 echo "HPC_USER..: $HPC_USER"
 echo "HPC_GROUP..: $HPC_GROUP"
 
-if [ $INSTALL_PATH -eq "/" ]; then
+if [ $INSTALL_PATH = "/" ]; then
 	PHOTOSCAN_FOLDER="/photoscan-pro"
 else
 	PHOTOSCAN_FOLDER="$INSTALL_PATH/photoscan-pro"
@@ -84,7 +84,7 @@ download_photoscan()
 
 activate_photoscan()
 {
-	$PHOTOSCAN_FOLDER/photoscan.sh --activate $ACTIVATION_CODE
+	sudo -H -u $HPC_USER bash -c "$PHOTOSCAN_FOLDER/photoscan.sh --activate $ACTIVATION_CODE"
 }
 
 install_photoscan_node_script_in_cron()

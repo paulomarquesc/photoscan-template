@@ -75,7 +75,7 @@
       "value": "10.0.0.5"
     },
     "headRoot": {
-      "value": "\\\\beegfs\\beegfsshare"
+      "value": "\\\\beegfs\\beegfsshare\\Projects"
     },
     "headServerName": {
       "value": "headnode"
@@ -105,10 +105,10 @@
       "value": 15
     },
     "gpuNodesCount": {
-      "value": 2  
+      "value": 5  
     },
     "gpuNodesVmSize": {
-      "value": "Standard_NC6s_v2"
+      "value": "Standard_NC24s_v2"
     },
     "useBeeGfsStorage": {
       "value": "yes"
@@ -120,7 +120,7 @@
       "value": ""
     },
     "nfsHomeExportPath": {
-      "value": "/mnt/beegfshome"
+      "value": "/home"
     },
     "nfsScratchExportPath": {
       "value": "/data"

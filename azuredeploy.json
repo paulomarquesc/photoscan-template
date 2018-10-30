@@ -186,8 +186,8 @@
         "description": "Root path where the projects are located for Server."
       }
     },
-    "workerNodesType":{
-      "type":"string",
+    "workerNodesType": {
+      "type": "string",
       "defaultValue": "linux",
       "allowedValues": [
         "linux",
@@ -302,6 +302,98 @@
         "description": "If useNfsStorage is set to 'yes', this parameter with correct values is mandatory. This is the export path configured in your NFS server to be used by Photoscan for project processing."
       },
       "defaultValue": "/data"
+    },
+    "nfsScratchFolderNfsVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "NFS Version used to mount scratch (data) folder. Will be used only when NFS storage is in use."
+      },
+      "defaultValue": "nfs4",
+      "allowedValues": [
+        "nfs",
+        "nfs4"
+      ]
+    },
+    "homeFolderNfsVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "NFS Version used to mount home folder for HPC User. When using BeeGFS, this value must be nfs4, if using Avere vFXT it must be nfs."
+      },
+      "defaultValue": "nfs4",
+      "allowedValues": [
+        "nfs",
+        "nfs4"
+      ]
+    },
+    "nfsExportPathUNC": {
+      "type": "string",
+      "metadata": {
+        "description": "UNC NFS Export path. E.g. \\\\vfxt\\!\\msazure"
+      },
+      "defaultValue": "\\\\vfxt\\!\\msazure"
+    },
+    "nfsMountType": {
+      "type": "string",
+      "metadata": {
+        "description": "Type of NFS mounts, hard or soft."
+      },
+      "allowedValues": [
+        "hard",
+        "soft"
+      ],
+      "defaultValue": "hard"
+    },
+    "nfsMapDriveLetter": {
+      "type": "string",
+      "metadata": {
+        "description": "Drive letter where nfsExportPathUNC will be mapped to."
+      },
+      "defaultValue": "z:"
+    },
+    "nfsNoCaseSensitiveLookup": {
+      "type": "bool",
+      "metadata": {
+        "description": "Sets that NFS will use case sensitive lookups."
+      },
+      "defaultValue": false
+    },
+    "nfsTimeout": {
+      "type": "int",
+      "metadata": {
+        "description": "NFS timeout."
+      },
+      "defaultValue": 60,
+      "maxValue": 60
+    },
+    "nfsMountRetry": {
+      "type": "int",
+      "metadata": {
+        "description": "NFS mount retries."
+      },
+      "defaultValue": 3
+    },
+    "nfsDefaultAccessMode": {
+      "type": "int",
+      "metadata": {
+        "description": "NFS default access mode."
+      },
+      "defaultValue": 777
+    },
+    "nfsWindowsRsizeKb": {
+      "type": "int",
+      "metadata": {
+        "description": "Windows NFS Client read size in KB."
+      },
+      "defaultValue": 64,
+      "maxValue": 64
+    },
+    "nfsWindowsWsizeKb": {
+      "type": "int",
+      "metadata": {
+        "description": "Windows NFS Client write size in KB."
+      },
+      "defaultValue": 64,
+      "maxValue": 64
     },
     "storageVnetRG": {
       "type": "string",
@@ -514,7 +606,8 @@
       "jumpBoxRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'photoscan-rg')]",
       "adRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'photoscan-rg')]",
       "photoscanRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'photoscan-rg')]"
-    }
+    },
+    "hpcUserNfsHostName": "[if(equals(parameters('useBeeGfsStorage'),'yes'),parameters('beeGfsMasterName'),split(parameters('nfsDnsEntry'),',')[0])]"
   },
   "resources": [
     {
@@ -642,7 +735,7 @@
             "value": "[parameters('beeGfsMasterIpAddress')]"
           },
           "useNfsStorage": {
-            "value":"[parameters('useNfsStorage')]"
+            "value": "[parameters('useNfsStorage')]"
           },
           "nfsDnsEntry": {
             "value": "[parameters('nfsDnsEntry')]"
@@ -682,8 +775,8 @@
           "adminUsername": {
             "value": "[parameters('adminUsername')]"
           },
-          "dnsDomainName":{
-            "value":"[parameters('dnsDomainName')]"
+          "dnsDomainName": {
+            "value": "[parameters('dnsDomainName')]"
           },
           "adDomainNetBIOSName": {
             "value": "[parameters('adDomainNetBIOSName')]"
@@ -883,6 +976,12 @@
           },
           "photoscanAbsolutePaths": {
             "value": "[parameters('photoscanAbsolutePaths')]"
+          },
+          "hpcUser": {
+            "value": "[parameters('hpcUser')]"
+          },
+          "hpcGroup": {
+            "value": "[parameters('hpcGroup')]"
           }
         }
       }
@@ -933,7 +1032,7 @@
           },
           "adDomainNetBIOSName": {
             "value": "[parameters('adDomainNetBIOSName')]"
-          },          
+          },
           "adminPassword": {
             "value": "[parameters('adminPassword')]"
           },
@@ -980,7 +1079,7 @@
       }
     },
     {
-      "condition": "[and(equals(parameters('useBeeGfsStorage'),'yes'),equals(parameters('workerNodesType'),'linux'))]",
+      "condition": "[and(equals(parameters('useBeeGfsStorage'),'yes'), and(equals(parameters('workerNodesType'),'linux'),equals(parameters('useNfsStorage'),'no')))]",
       "comments": "Configure Linux Nodes to use BeeGFS",
       "name": "[concat(variables('deploymentUniqueString'),'-nodes-attach-BeeGFS')]",
       "type": "Microsoft.Resources/deployments",
@@ -1011,9 +1110,6 @@
           "gpuNodesCount": {
             "value": "[parameters('gpuNodesCount')]"
           },
-          "dnsDomainName": {
-            "value": "[parameters('dnsDomainName')]"
-          },
           "deploymentConfig": {
             "value": "[variables('deploymentConfig')]"
           },
@@ -1038,17 +1134,14 @@
           "nfsSharedStorageHpcUserHomeFolder": {
             "value": "[parameters('nfsSharedStorageHpcUserHomeFolder')]"
           },
+          "nfsHomeExportPath": {
+            "value": "[parameters('nfsHomeExportPath')]"
+          },
           "hpcUser": {
             "value": "[parameters('hpcUser')]"
           },
-          "hpcUid": {
-            "value": "[parameters('hpcUid')]"
-          },
           "hpcGroup": {
             "value": "[parameters('hpcGroup')]"
-          },
-          "hpcGid": {
-            "value": "[parameters('hpcGid')]"
           }
         }
       }

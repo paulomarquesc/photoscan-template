@@ -147,14 +147,30 @@
     },
     "hpcUser": {
       "type": "string",
+      "defaultValue": "hpcuser",
       "metadata": {
         "description": "Hpc user that will be owner of all files in the hpc folder structure."
       }
     },
+    "hpcUid": {
+      "type": "int",
+      "defaultValue": 7007,
+      "metadata": {
+        "description": "Hpc User ID."
+      }
+    },
     "hpcGroup": {
       "type": "string",
+      "defaultValue": "hpcgroup",
       "metadata": {
         "description": "Hpc Group."
+      }
+    },
+    "hpcGid": {
+      "type": "int",
+      "defaultValue": 7007,
+      "metadata": {
+        "description": "Hpc Group ID."
       }
     }
   },
@@ -162,7 +178,9 @@
     "sshKeyPath": "[concat('/home/',parameters('adminUsername'),'/.ssh/authorized_keys')]",
     "vnetId": "[resourceId(parameters('vnetRg'),'Microsoft.Network/virtualNetworks',parameters('vnetName'))]",
     "subnetId": "[concat(variables('vnetId'),'/subnets/',parameters('photoscanSubnetName'))]",
+    "setupUserParams": "[concat(parameters('hpcUser'),' ',parameters('hpcUid'),' ',parameters('hpcGroup'),' ',parameters('hpcGid'),' ',parameters('dnsDomainName'))]",
     "installParams": "[concat(parameters('activationCode'),' ',parameters('linuxPhotoscanDownloadUrl'),' ',parameters('dispatch'),' ',parameters('nodeRoot'),' ',parameters('gpuMask'),' ',parameters('photoscanInstallPath'),' ',parameters('photoscanAbsolutePaths'),' ',parameters('hpcUser'),' ',parameters('hpcGroup'))]",
+    
     "avSetInfo": [
       {
         "availabilitySetName": "LinuxNodes-AvSet",
@@ -352,11 +370,12 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(parameters('_artifactsLocation'), '/scripts/install_photoscan_node.sh', parameters('_artifactsLocationSasToken'))]"
+            "[concat(parameters('_artifactsLocation'), '/scripts/install_photoscan_node.sh', parameters('_artifactsLocationSasToken'))]",
+            "[concat(parameters('_artifactsLocation'), '/scripts/setup_linux_common_user.sh', parameters('_artifactsLocationSasToken'))]"
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('bash install_photoscan_node.sh ', variables('installParams'))]"
+          "commandToExecute": "[concat('bash setup_linux_common_user.sh ', variables('setupUserParams'),';', 'bash install_photoscan_node.sh ', variables('installParams'))]"
         }
       }
     }

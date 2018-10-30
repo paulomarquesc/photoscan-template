@@ -34,11 +34,24 @@
         "description": "Photoscan Vnet Resoure group name"
       }
     },
+    "headServerName": {
+      "type": "string",
+      "defaultValue": "headnode",
+      "metadata": {
+        "description": "Photoscan Server (head) name."
+      }
+    },
     "nodeNameSuffix": {
       "type": "string",
       "defaultValue": "workernode",
       "metadata": {
         "description": "Name suffix to be used in the GPU Nodes."
+      }
+    },
+    "dnsDomainName": {
+      "type": "string",
+      "metadata": {
+        "description": "DNS domain name use to build the host's FQDN."
       }
     },
     "gpuNodesCount": {
@@ -77,40 +90,126 @@
         "description": "Folder path where Shared Storage volume will be mounted on Linux VMs."
       }
     },
+    "nfsScratchExportPath": {
+      "type": "string",
+      "metadata": {
+        "description": "If useNfsStorage is set to 'yes', this parameter with correct values is mandatory. This is the export path configured in your NFS server to be used by Photoscan for project processing."
+      },
+      "defaultValue": "/data"
+    },
+    "nfsMapDriveLetter": {
+      "type": "string",
+      "metadata": {
+        "description": "Drive letter where nfsExportPathUNC will be mapped to."
+      }
+    },
+    "nfsExportPathUNC" :{
+      "type": "string",
+      "metadata": {
+        "description": "UNC NFS Export path. E.g. \\\\vfxt\\!\\msazure"
+      }
+    },
+    "nfsMountType": {
+      "type": "string",
+      "metadata": {
+        "description": "Type of NFS mounts, hard or soft."
+      },
+      "allowedValues": [
+        "hard",
+        "soft"
+      ],
+      "defaultValue": "hard"
+    },
     "nfsSharedStorageHpcUserHomeFolder": {
       "type": "string",
-      "defaultValue": "/mnt/beegfshome",
       "metadata": {
         "description": "This indicates shared storage mount point on Linux VM nodes for the hpcuser home folder, it will mounted on all Linux nodes."
       }
     },
-    "nfsHomeExportPath": {
+    "nfsNoCaseSensitiveLookup":{
+      "type": "bool",
+      "metadata": {
+        "description": "Sets that NFS will use case sensitive lookups."
+      },
+      "defaultValue": false
+    },
+    "nfsTimeout":{
+      "type": "int",
+      "metadata": {
+        "description": "NFS timeout."
+      },
+      "defaultValue": 60,
+      "maxValue": 60
+    },
+    "nfsMountRetry":{
+      "type": "int",
+      "metadata": {
+        "description": "NFS mount retries."
+      },
+      "defaultValue": 3
+    },
+    "nfsDefaultAccessMode":{
+      "type": "int",
+      "metadata": {
+        "description": "NFS default access mode."
+      },
+      "defaultValue": 777
+    },
+    "nfsWindowsRsizeKb":{
+      "type": "int",
+      "metadata": {
+        "description": "Windows NFS Client read size in KB."
+      },
+      "defaultValue": 64,
+      "maxValue": 64
+    },
+    "nfsWindowsWsizeKb":{
+      "type": "int",
+      "metadata": {
+        "description": "Windows NFS Client write size in KB."
+      },
+      "defaultValue": 64,
+      "maxValue": 64
+    },
+    "nfsDnsEntry": {
       "type": "string",
       "metadata": {
-        "description": "If useNfsStorage is set to 'yes', this parameter with correct values is mandatory. This is the export path configured in your NFS server for home folder of HPC User."
-      },
-      "defaultValue": "/home"
+        "description": "Format is <DNS A Record for NFS servers>,<IP1>,<IP2>,<IP3>,<IPx>. E.g. vfxt,10.0.0.11,10.0.0.12,10.0.0.13. This parameter is split and host Host name is used."
+      }
     },
     "hpcUser": {
       "type": "string",
-      "defaultValue": "hpcuser",
       "metadata": {
         "description": "Hpc user that will be owner of all files in the hpc folder structure."
       }
     },
+    "hpcUid": {
+      "type": "int",
+      "metadata": {
+        "description": "Hpc User ID."
+      }
+    },
     "hpcGroup": {
       "type": "string",
-      "defaultValue": "hpcgroup",
       "metadata": {
         "description": "Hpc Group."
+      }
+    },
+    "hpcGid": {
+      "type": "int",
+      "metadata": {
+        "description": "Hpc Group ID."
       }
     }
   },
   "variables": {
+    "nfsHostName":"[split(parameters('nfsDnsEntry'),',')[0]]",
     "deploymentUniqueString": "[uniqueString(concat(deployment().name,resourceGroup().id))]",
     "peering1Name": "[concat(parameters('vnetName'),'-peerto-',parameters('storageVnetName'))]",
     "peering2Name": "[concat(parameters('storageVnetName'),'-peerto-',parameters('vnetName'))]",
-    "installParams": "[concat(parameters('beeGfsMasterName'),' ', parameters('sharedStorageMountPoint'),' ', parameters('nfsHomeExportPath'),' ', parameters('nfsSharedStorageHpcUserHomeFolder'),' ', parameters('hpcUser'),' ', parameters('hpcGroup'))]",
+    "installParams": "[concat(' -NfsMapDriveLetter ', parameters('nfsMapDriveLetter'), ' -NfsExportPathUNC ', parameters('nfsExportPathUNC'), ' -HpcUserID ', parameters('hpcUid'), ' -HpcGroupID ', parameters('hpcGid'), ' -HpcGroupID ', parameters('hpcGid'), ' -MountType ', parameters('nfsMountType'), ' -NoCaseSensitiveLookup ', parameters('nfsNoCaseSensitiveLookup') , ' -Timeout ', parameters('nfsTimeout') , ' -MountRetry ', parameters('nfsMountRetry') , ' -DefaultAccessMode ', parameters('nfsDefaultAccessMode') , ' -RSizeKB ', parameters('nfsWindowsRsizeKb') , ' -WSizeKB ', parameters('nfsWindowsWsizeKb'))]",
+    "linuxInstallParams": "[concat(variables('nfsHostName'),' ', parameters('nfsScratchExportPath'),' ', parameters('hpcUser'), ' ',  parameters('hpcGroup'))]",
+    
     "gpuNodesVMsList": {
       "copy": [
         {
@@ -126,7 +225,7 @@
   "resources": [
     {
       "condition": true,
-      "comments": "Vnet Peering from Photoscan Vnet to BeeGFS vnet",
+      "comments": "Vnet Peering from Photoscan Vnet to NFS Storage vnet",
       "name": "[concat(variables('deploymentUniqueString'),'-Peering1-PeeringDeployment')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "[parameters('deploymentConfig').apiVersions.deploymentApiVersion]",
@@ -190,7 +289,33 @@
     },
     {
       "condition": true,
-      "comments": "CustomScript extension execution to install BeeGFS client on photoscan Node",
+      "comments": "CustomScript extension execution to configure Photoscan Scheduler (head)",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(parameters('headServerName'),'/CustomScript')]",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat(variables('deploymentUniqueString'),'-Peering2-PeeringDeployment')]",
+        "[concat(variables('deploymentUniqueString'),'-Peering1-PeeringDeployment')]"
+      ],
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.9",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('_artifactsLocation'),'/scripts/install_nfs_based_storage_config.ps1', parameters('_artifactsLocationSasToken'))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ./scripts/install_nfs_based_storage_config.ps1',' ', variables('installParams'))]"
+        }
+      }
+    },
+    {
+      "condition": true,
+      "comments": "CustomScript extension execution NFS client on photoscan Linux Nodes",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('gpuNodesVMsList').items[copyIndex()].name,'/CustomScript')]",
       "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
@@ -210,11 +335,11 @@
         "autoUpgradeMinorVersion": true,
         "settings": {
           "fileUris": [
-            "[concat(parameters('_artifactsLocation'), '/scripts/install_beegfs_client.sh', parameters('_artifactsLocationSasToken'))]"
+            "[concat(parameters('_artifactsLocation'), '/scripts/install_nfs_based_storage_config.sh', parameters('_artifactsLocationSasToken'))]"
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('bash install_beegfs_client.sh ', variables('installParams'))]"
+          "commandToExecute": "[concat('bash install_nfs_based_storage_config.sh ', variables('linuxInstallParams'))]"
         }
       }
     }
