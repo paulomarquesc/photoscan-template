@@ -74,9 +74,6 @@
     "linuxJumpboxIpAddress": {
       "value": "10.0.0.5"
     },
-    "headRoot": {
-      "value": "\\\\beegfs\\beegfsshare\\Projects"
-    },
     "headServerName": {
       "value": "headnode"
     },
@@ -89,53 +86,29 @@
     "nodeNameSuffix": {
       "value": "lgpunode"
     },
-    "nodeRoot": {
-      "value": "/beegfs/beegfsshare"
-    },
     "nodeSubnetIpAddressSuffix": {
       "value": "10.0.1"
     },
     "nodeStartIpAddress": {
       "value": 40
     },
+    "nodeCount": {
+      "value": 2  
+    },
+    "nodeVmSize": {
+      "value": "Standard_NC6s_v2"
+    },
+    "headRoot": {
+      "value": "\\\\beegfs\\beegfsshare"
+    },
+    "nodeRoot": {
+      "value": "/beegfs/beegfsshare"
+    },
     "dispatch": {
       "value": "10.0.1.250"
     },
     "gpuMask": {
       "value": 15
-    },
-    "gpuNodesCount": {
-      "value": 5  
-    },
-    "gpuNodesVmSize": {
-      "value": "Standard_NC24s_v2"
-    },
-    "useBeeGfsStorage": {
-      "value": "yes"
-    },
-    "useNfsStorage": {
-      "value": "no"
-    },
-    "nfsDnsEntry": {
-      "value": ""
-    },
-    "nfsHomeExportPath": {
-      "value": "/home"
-    },
-    "nfsScratchExportPath": {
-      "value": "/data"
-    },
-    "nfsScratchFolderNfsVersion":{
-      "value":"nfs"
-    },
-    "homeFolderNfsVersion":{
-      "value": "nfs4"
-    },
-    "storageVnetRG": {
-      "value": "beegfs-rg-eus"
-    },
-    "storageVnetName": {
-      "value": "beegfs-vnet"
     },
     "windowsPhotoscanDownloadUrl": {
       "value": "http://download.agisoft.com/photoscan-pro_1_4_4_x64.msi"
@@ -146,26 +119,41 @@
     "photoscanInstallPath": {
       "value": "/"
     },
+    "photoscanAbsolutePaths": {
+      "value": 0
+    },
+    "useNfsStorage": {
+      "value": "no"
+    },
+    "useBeeGfsStorage": {
+      "value": "yes"
+    },
+     "storageVnetRG": {
+      "value": "beegfs-rg-eus"
+    },
+    "storageVnetName": {
+      "value": "beegfs-vnet"
+    },
+    "sharedNfsStorageHpcUserHomeFolder": {
+      "value": "/mnt/beegfshome"
+    },
+    "homeNfsExportPath": {
+      "value": "/mnt/beegfshome"
+    },
+    "sharedScracthMountPoint": {
+      "value": "/beegfs"
+    },
     "beeGfsMasterName": {
       "value": "beegfsmaster"
     },
     "beeGfsMasterIpAddress": {
       "value": "192.168.0.4"
     },
-    "sharedStorageMountPoint": {
-      "value": "/beegfs"
-    },
     "beeGfsSmbServersVip": {
       "value": "192.168.0.55"
     },
     "beeGfsSmbServerARecordName": {
       "value": "beegfs"
-    },
-    "photoscanAbsolutePaths": {
-      "value": 0
-    },
-    "nfsSharedStorageHpcUserHomeFolder": {
-      "value": "/mnt/beegfshome"
     },
     "hpcUser": {
       "value": "hpcuser"

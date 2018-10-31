@@ -1,5 +1,8 @@
 # Photoscan-template
-Sample templates and scripts that deploys [Agisoft Photoscan](http://www.agisoft.com) product in Azure. This template was designed to work with another sample template that deploys BeeGFS storage solutio, for a complete end-to-end scenario please deploy [this](https://github.com/paulomarquesc/beegfs-template) template first. This is not a hard-requirement, you can use other storage solutions but the template will offer full automation if you rely on that BeeGFS template, otherwise, make sure you make the necessary adjustments in your cloned template.
+Sample templates and scripts that deploys [Agisoft Photoscan](http://www.agisoft.com) product in Azure. This template was designed to work with two storage solutions, one is BeeGFS and the other one is Avere vFXT, which is now a Microsoft product.
+
+<TODO:Update section for Avere>
+sample template that deploys BeeGFS storage solution, for a complete end-to-end scenario please deploy [this](https://github.com/paulomarquesc/beegfs-template) template first. This is not a hard-requirement, you can use other storage solutions but the template will offer full automation if you rely on that BeeGFS template, otherwise, make sure you make the necessary adjustments in your cloned template.
 
 In summary, this template will deploy a virtual network with the following components:
 
@@ -110,6 +113,11 @@ To
 * **_artifactsLocation:** Auto-generated container in staging storage account to receive post-build staging folder upload.
 * **_artifactsLocationSasToken:** Auto-generated token to access _artifactsLocation.
 * **location:** Location where the resources of this template will be deployed to. Default Value: `eastus`
+* **adminPassword:** Admin password.
+* **useSingleResourceGroup:** Whether or not use multiple resource groups, if using multiple, please change the resource groups manually in the variables section. Default Value: `yes`
+* **activationCode:** Photoscan Activation Code.
+* **adminUsername:** Name of admin account of the VMs, this name cannot be well know names, like root, admin, administrator, guest, etc.
+* **sshKeyData:** SSH rsa public key file as a string.
 * **vnetName:** Virtual Network Name. Default Value: `Photoscan-vnet`
 * **vnetAdressSpace:** Virtual Network Address Space. Default Value: `10.0.0.0/16`
 * **jumpboxSubnetName:** Jumpbox subnet name. Default Value: `Jumpbox-SN`
@@ -118,10 +126,6 @@ To
 * **photoscanSubnetAdressPrefix:** Photoscan subnet address prefix. Default Value: `10.0.1.0/24`
 * **adSubnetName:** Subnet where Domain Controllers will be deployed to. Default Value: `AD-SN`
 * **adSubnetAdressPrefix:** AD subnet address prefix. Default Value: `10.0.2.0/24`
-* **deployLinuxJumpbox:** Should this template deploy a Linux Jumpbox. Default Value: `no`
-* **useBeeGfsStorage:** Should this template use BeeGfs storage. Default Value: `yes`
-* **adminUsername:** Name of admin account of the VMs, this name cannot be well know names, like root, admin, administrator, guest, etc.
-* **adminPassword:** Admin password.
 * **dc1Name:** Domain Controller 1 Name. Default Value: `DC-01`
 * **dc2Name:** Domain Controller 2 Name. Default Value: `DC-02`
 * **dc1IpAddress:** Domain Controller 1 IP Address. Default Value: `10.0.2.4`
@@ -129,39 +133,54 @@ To
 * **dcVmSize:** Domain Controller VM Size. Default Value: `Standard_DS2_v2`
 * **dnsDomainName:** Active Directory FQDN. Default Value: `testdomain.local`
 * **adDomainNetBIOSName:** Active Directory NetBIOS domain name. Default Value: `TESTDOMAIN`
-* **useSingleResourceGroup:** Whether or not use multiple resource groups, if using multiple, please change the resource groups manually in the variables section. Default Value: `yes`
-* **sshKeyData:** SSH rsa public key file as a string.
-* **activationCode:** Photoscan Activation Code.
-* **headServerName:** Photoscan Server (head) name. Default Value: `headnode`
-* **headRoot:** Root path where the projects are located for Server. Default Value: `\\beegfs\beegfsshare\Projects`
-* **workerNodesType:** OS type of worker nodes, Linux or Windows. Default Value: `linux`
-* **nodeNameSuffix:** Name suffix to be used in the GPU Nodes. Default Value: `workernode`
-* **nodeRoot:** Root path where the projects are located for Nodes. Default Value: `/beegfs/beegfsshare/Projects`
-* **nodeSubnetIpAddressSuffix:** Nodes will have static Ip addresses, this is the network part of a class C subnet. Default Value: `10.0.1`
-* **nodeStartIpAddress:** Nodes will have static Ip addresses, this is the start number of the host part of the class C ip address. Default Value: `20`
-* **dispatch:** Ip address of the photoscan server (head). Default Value: `10.0.1.250`
-* **gpuMask:** Decimal represention of how many GPUs will be enabled for processing. E.g. 15 means 1111, that is equal to 4 GPUs. Default Value: `15`
-* **gpuNodesVmSize:** GPU VM Size. Default Value: `Standard_NC24s_v2`
-* **gpuNodesCount:** Number of GPU VM Nodes. Default Value: `5`
-* **headVmSize:** Head node VM Size. Default Value: `Standard_D8S_v3`
-* **storageVnetRG:** Storage Vnet Resoure group name. Default Value: `beegfs-rg-eus`
-* **storageVnetName:** Srorage Virtual Network name. Default Value: `beegfs-vnet`
-* **linuxPhotoscanDownloadUrl:** Photoscan Linux binaries download URL. Default Value: `http://download.agisoft.com/photoscan-pro_1_4_4_amd64.tar.gz`
-* **windowsPhotoscanDownloadUrl:** Windows binary Photoscan download URL. Default Value: `http://download.agisoft.com/photoscan-pro_1_4_4_x64.msi`
-* **photoscanInstallPath:** Photoscan installation path. Default Value: `/`
-* **beeGfsMasterName:** BeeGFS Master node VM name (single label). Default Value: `beegfsmaster`
-* **beeGfsMasterIpAddress:** BeeGFS Master Ip address, this will be added as an A record on DNS. Default Value: `192.168.0.4`
-* **sharedStorageMountPoint:** Folder path where Shared Storage volume will be mounted on Linux VMs.. Default Value: `/beegfs`
-* **beeGfsSmbServersVip:** Ip Address of the BeeGFS SMB clients Load Balancer,this will be added as an A record on DNS. Default Value: `192.168.0.55`
-* **beeGfsSmbServerARecordName:** BeeGFS A record to be used by Photoscan Server (Head). Default Value: `beegfs`
-* **photoscanAbsolutePaths:** Use Photoscan absolute paths. 0 = No, 1= Yes. Default Value: `0`
-* **windowsJumpboxVmSize:** Windows Jumpbox VM Size. Default Value: `Standard_DS2_v2`
-* **linuxJumpboxVmSize:** Linux Jumpbox VM Size. Default Value: `Standard_DS2_v2`
+* **deployLinuxJumpbox:** Should this template deploy a Linux Jumpbox. Default Value: `yes`
 * **windowsJumpboxVmName:** Windows Jumpbox VM Name. Default Value: `wjb-01`
 * **linuxJumpboxVmName:** Linux Jumpbox VM Name. Default Value: `ljb-01`
+* **windowsJumpboxVmSize:** Windows Jumpbox VM Size. Default Value: `Standard_DS2_v2`
+* **linuxJumpboxVmSize:** Linux Jumpbox VM Size. Default Value: `Standard_DS2_v2`
 * **windowsJumpboxIpAddress:** Windows Jumpbox VM Ip Address. Default Value: `10.0.0.4`
 * **linuxJumpboxIpAddress:** Linux Jumpbox VM Ip Address. Default Value: `10.0.0.5`
-* **nfsSharedStorageHpcUserHomeFolder:** This indicates shared storage mount point on Linux VM nodes for the hpcuser home folder, it will be mounted on all Linux nodes. Default Value: `/mnt/beegfshome`
+* **headServerName:** Photoscan Server (head) name. Default Value: `headnode`
+* **headVmSize:** Head node VM Size. Default Value: `Standard_D8S_v3`
+* **workerNodesType:** OS type of worker nodes, Linux or Windows. Default Value: `linux`
+* **nodeNameSuffix:** Name suffix to be used in the GPU Nodes. Default Value: `workernode`
+* **nodeSubnetIpAddressSuffix:** Nodes will have static Ip addresses, this is the network part of a class C subnet. Default Value: `10.0.1`
+* **nodeStartIpAddress:** Nodes will have static Ip addresses, this is the start number of the host part of the class C ip address. Default Value: `20`
+* **nodeCount:** Number of GPU VM Nodes. Default Value: `5`
+* **nodeVmSize:** GPU VM Size. Default Value: `Standard_NC24s_v2`
+* **headRoot:** Root path where the projects are located for Server. Default Value: `\\beegfs\beegfsshare\Projects`
+* **nodeRoot:** Root path where the projects are located for Nodes. Default Value: `/beegfs/beegfsshare/Projects`
+* **dispatch:** Ip address of the photoscan server (head). Default Value: `10.0.1.250`
+* **gpuMask:** Decimal represention of how many GPUs will be enabled for processing. E.g. 15 means 1111, that is equal to 4 GPUs. Default Value: `15`
+* **windowsPhotoscanDownloadUrl:** Windows binary Photoscan download URL. Default Value: `http://download.agisoft.com/photoscan-pro_1_4_4_x64.msi`
+* **linuxPhotoscanDownloadUrl:** Photoscan Linux binaries download URL. Default Value: `http://download.agisoft.com/photoscan-pro_1_4_4_amd64.tar.gz`
+* **photoscanInstallPath:** Photoscan installation path. Default Value: `/`
+* **photoscanAbsolutePaths:** Use Photoscan absolute paths. 0 = No, 1= Yes. Default Value: `0`
+* **useNfsStorage:** Should this template use Nfs storage. If this parameter is set to 'yes', make sure useBeeGfsStorage is set to 'no'. Default Value: `no`
+* **useBeeGfsStorage:** Should this template use BeeGfs storage. If this parameter is set to 'yes', make sure useNfsStorage is set to 'no'. Default Value: `yes`
+* **storageVnetRG:** Storage Vnet Resoure group name. Default Value: `beegfs-rg-eus`
+* **storageVnetName:** Srorage Virtual Network name. Default Value: `beegfs-vnet`
+* **sharedNfsStorageHpcUserHomeFolder:** This indicates shared storage mount point on Linux VM nodes for the hpcuser home folder, it will mounted on all Linux nodes. Default Value: `/mnt/beegfshome`
+* **homeNfsExportPath:** If useNfsStorage is set to 'yes', this parameter with correct values is mandatory. This is the export path configured in your NFS server for home folder of HPC User. Default Value: `/home`
+* **sharedScracthMountPoint:** Folder path where Shared Storage volume will be mounted on Linux VMs.. Default Value: `/beegfs`
+* **nfsScratchExportPath:** If useNfsStorage is set to 'yes', this parameter with correct values is mandatory. This is the export path configured in your NFS server to be used by Photoscan for project processing. Default Value: `/data`
+* **nfsDnsEntry:** If useNfsStorage is set to 'yes', this parameter with correct values is mandatory. Format is <DNS A Record for NFS servers>,<IP1>,<IP2>,<IP3>,<IPx>. E.g. vfxt,10.0.0.11,10.0.0.12,10.0.0.13. Default Value: ``
+* **nfsScratchFolderNfsVersion:** NFS Version used to mount scratch (data) folder. Will be used only when NFS storage is in use. Default Value: `nfs`
+* **nfsHomeFolderNfsVersion:** NFS Version used to mount home folder for HPC User. When using BeeGFS, this value must be nfs4, if using Avere vFXT it must be nfs. Default Value: `nfs`
+* **nfsScratchMountOptions:** NFS scracth volumne mount options, comma separated, no spaces. E.g. noatime,rsize=524288,wsize=524288. Default Value: `defaults`
+* **nfsExportPathUNC:** UNC NFS Export path, this value is used by Windows Scheduler (Head) to map the NFS path to a drive letter when using NFS storage. E.g. \\vfxt\!\msazure. Default Value: `\\vfxt\!\msazure`
+* **nfsMountType:** Type of NFS mounts, hard or soft. Default Value: `hard`
+* **nfsMapDriveLetter:** Drive letter where nfsExportPathUNC will be mapped to. Default Value: `z:`
+* **nfsCaseSensitiveLookup:** Sets that NFS will use case sensitive lookups. Default Value: `False`
+* **nfsTimeout:** NFS timeout. Default Value: `60`
+* **nfsMountRetry:** NFS mount retries. Default Value: `3`
+* **nfsDefaultAccessMode:** NFS default access mode. Default Value: `777`
+* **nfsWindowsRsizeKb:** Windows NFS Client read size in KB. Default Value: `64`
+* **nfsWindowsWsizeKb:** Windows NFS Client write size in KB. Default Value: `64`
+* **beeGfsMasterName:** BeeGFS Master node VM name (single label). Default Value: `beegfsmaster`
+* **beeGfsMasterIpAddress:** BeeGFS Master Ip address, this will be added as an A record on DNS. Default Value: `192.168.0.4`
+* **beeGfsSmbServersVip:** Ip Address of the BeeGFS SMB clients Load Balancer,this will be added as an A record on DNS. Default Value: `192.168.0.55`
+* **beeGfsSmbServerARecordName:** BeeGFS A record to be used by Photoscan Server (Head). Default Value: `beegfs`
 * **hpcUser:** Hpc user that will be owner of all files in the hpc folder structure. Default Value: `hpcuser`
 * **hpcUid:** Hpc User ID. Default Value: `7007`
 * **hpcGroup:** Hpc Group. Default Value: `hpcgroup`

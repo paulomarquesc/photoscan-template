@@ -48,13 +48,7 @@
         "description": "Name suffix to be used in the GPU Nodes."
       }
     },
-    "dnsDomainName": {
-      "type": "string",
-      "metadata": {
-        "description": "DNS domain name use to build the host's FQDN."
-      }
-    },
-    "gpuNodesCount": {
+    "nodeCount": {
       "type": "int",
       "metadata": {
         "description": "Number of GPU VM Nodes."
@@ -78,13 +72,7 @@
         "description": "Object that contains library paths, api versions, SAS token, from master template."
       }
     },
-    "beeGfsMasterName": {
-      "type": "string",
-      "metadata": {
-        "description": "Object that contains library paths, api versions, SAS token, from master template."
-      }
-    },
-    "sharedStorageMountPoint":{
+    "sharedScracthMountPoint":{
       "type": "string",
       "metadata": {
         "description": "Folder path where Shared Storage volume will be mounted on Linux VMs."
@@ -120,13 +108,49 @@
       ],
       "defaultValue": "hard"
     },
-    "nfsSharedStorageHpcUserHomeFolder": {
+    "sharedNfsStorageHpcUserHomeFolder": {
       "type": "string",
       "metadata": {
         "description": "This indicates shared storage mount point on Linux VM nodes for the hpcuser home folder, it will mounted on all Linux nodes."
       }
     },
-    "nfsNoCaseSensitiveLookup":{
+    "homeNfsExportPath": {
+      "type": "string",
+      "metadata": {
+        "description": "If useNfsStorage is set to 'yes', this parameter with correct values is mandatory. This is the export path configured in your NFS server for home folder of HPC User."
+      },
+      "defaultValue": "/home"
+    },
+    "nfsScratchFolderNfsVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "NFS Version used to mount scratch (data) folder. Will be used only when NFS storage is in use."
+      },
+      "defaultValue": "nfs",
+      "allowedValues": [
+        "nfs",
+        "nfs4"
+      ]
+    },
+    "nfsHomeFolderNfsVersion": {
+      "type": "string",
+      "metadata": {
+        "description": "NFS Version used to mount home folder for HPC User. When using BeeGFS, this value must be nfs4, if using Avere vFXT it must be nfs."
+      },
+      "defaultValue": "nfs",
+      "allowedValues": [
+        "nfs",
+        "nfs4"
+      ]
+    },
+    "nfsScratchMountOptions": {
+      "type": "string",
+      "metadata": {
+        "description": "NFS scracth volumne mount options, comma separated, no spaces. E.g. noatime,rsize=524288,wsize=524288."
+      },
+      "defaultValue": "defaults"
+    },
+    "nfsCaseSensitiveLookup":{
       "type": "bool",
       "metadata": {
         "description": "Sets that NFS will use case sensitive lookups."
@@ -207,14 +231,13 @@
     "deploymentUniqueString": "[uniqueString(concat(deployment().name,resourceGroup().id))]",
     "peering1Name": "[concat(parameters('vnetName'),'-peerto-',parameters('storageVnetName'))]",
     "peering2Name": "[concat(parameters('storageVnetName'),'-peerto-',parameters('vnetName'))]",
-    "installParams": "[concat(' -NfsMapDriveLetter ', parameters('nfsMapDriveLetter'), ' -NfsExportPathUNC ', parameters('nfsExportPathUNC'), ' -HpcUserID ', parameters('hpcUid'), ' -HpcGroupID ', parameters('hpcGid'), ' -HpcGroupID ', parameters('hpcGid'), ' -MountType ', parameters('nfsMountType'), ' -NoCaseSensitiveLookup ', parameters('nfsNoCaseSensitiveLookup') , ' -Timeout ', parameters('nfsTimeout') , ' -MountRetry ', parameters('nfsMountRetry') , ' -DefaultAccessMode ', parameters('nfsDefaultAccessMode') , ' -RSizeKB ', parameters('nfsWindowsRsizeKb') , ' -WSizeKB ', parameters('nfsWindowsWsizeKb'))]",
-    "linuxInstallParams": "[concat(variables('nfsHostName'),' ', parameters('nfsScratchExportPath'),' ', parameters('hpcUser'), ' ',  parameters('hpcGroup'))]",
-    
-    "gpuNodesVMsList": {
+    "installParams": "[concat(' -NfsMapDriveLetter ', parameters('nfsMapDriveLetter'), ' -NfsExportPathUNC ', parameters('nfsExportPathUNC'), ' -HpcUserID ', parameters('hpcUid'), ' -HpcGroupID ', parameters('hpcGid'), ' -MountType ', parameters('nfsMountType'), ' -CaseSensitiveLookup ', parameters('nfsCaseSensitiveLookup'), ' -Timeout ', parameters('nfsTimeout') , ' -MountRetry ', parameters('nfsMountRetry') , ' -DefaultAccessMode ', parameters('nfsDefaultAccessMode') , ' -RSizeKB ', parameters('nfsWindowsRsizeKb') , ' -WSizeKB ', parameters('nfsWindowsWsizeKb'))]",
+    "linuxInstallParams": "[concat(variables('nfsHostName'),' ', parameters('nfsScratchExportPath'), ' ', parameters('sharedScracthMountPoint'), ' ', parameters('homeNfsExportPath'), ' ', parameters('sharedNfsStorageHpcUserHomeFolder'), ' ', parameters('nfsScratchFolderNfsVersion'), ' ', parameters('nfsHomeFolderNfsVersion'), ' ', parameters('nfsScratchMountOptions'),' ', parameters('hpcUser'), ' ',  parameters('hpcGroup'))]",
+    "nodeVMsList": {
       "copy": [
         {
           "name": "items",
-          "count": "[parameters('gpuNodesCount')]",
+          "count": "[parameters('nodeCount')]",
           "input": {
             "name": "[concat(parameters('nodeNameSuffix'),'-',copyIndex('items',1))]"
           }
@@ -257,7 +280,7 @@
     },
     {
       "condition": true,
-      "comments": "Vnet Peering from BeeGFS vnet to Photoscan Vnet",
+      "comments": "Vnet Peering from NFS vnet to Photoscan Vnet",
       "name": "[concat(variables('deploymentUniqueString'),'-Peering2-PeeringDeployment')]",
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "[parameters('deploymentConfig').apiVersions.deploymentApiVersion]",
@@ -317,7 +340,7 @@
       "condition": true,
       "comments": "CustomScript extension execution NFS client on photoscan Linux Nodes",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('gpuNodesVMsList').items[copyIndex()].name,'/CustomScript')]",
+      "name": "[concat(variables('nodeVMsList').items[copyIndex()].name,'/CustomScript')]",
       "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -326,7 +349,7 @@
       ],
       "copy": {
         "name": "vmLinuxCustomScriptCopy",
-        "count": "[length(variables('gpuNodesVMsList').items)]"
+        "count": "[length(variables('nodeVMsList').items)]"
       },
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",

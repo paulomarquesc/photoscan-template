@@ -74,9 +74,6 @@
     "linuxJumpboxIpAddress": {
       "value": "10.0.0.5"
     },
-    "headRoot": {
-      "value": "\\\\beegfs\\beegfsshare"
-    },
     "headServerName": {
       "value": "headnode"
     },
@@ -89,53 +86,29 @@
     "nodeNameSuffix": {
       "value": "lgpunode"
     },
-    "nodeRoot": {
-      "value": "/beegfs/beegfsshare"
-    },
     "nodeSubnetIpAddressSuffix": {
       "value": "10.0.1"
     },
     "nodeStartIpAddress": {
       "value": 40
     },
+    "nodeCount": {
+      "value": 2  
+    },
+    "nodeVmSize": {
+      "value": "Standard_NC6s_v2"
+    },
+    "headRoot": {
+      "value": "//vfxt/!/data"
+    },
+    "nodeRoot": {
+      "value": "/mnt/vfxt-data"
+    },
     "dispatch": {
       "value": "10.0.1.250"
     },
     "gpuMask": {
       "value": 15
-    },
-    "gpuNodesCount": {
-      "value": 2  
-    },
-    "gpuNodesVmSize": {
-      "value": "Standard_NC6s_v2"
-    },
-    "useBeeGfsStorage": {
-      "value": "yes"
-    },
-    "useNfsStorage": {
-      "value": "no"
-    },
-    "nfsDnsEntry": {
-      "value": ""
-    },
-    "nfsHomeExportPath": {
-      "value": "/mnt/beegfshome"
-    },
-    "nfsScratchExportPath": {
-      "value": "/data"
-    },
-    "nfsScratchFolderNfsVersion":{
-      "value":"nfs"
-    },
-    "homeFolderNfsVersion":{
-      "value": "nfs4"
-    },
-    "storageVnetRG": {
-      "value": "beegfs-rg-eus"
-    },
-    "storageVnetName": {
-      "value": "beegfs-vnet"
     },
     "windowsPhotoscanDownloadUrl": {
       "value": "http://download.agisoft.com/photoscan-pro_1_4_4_x64.msi"
@@ -146,26 +119,50 @@
     "photoscanInstallPath": {
       "value": "/"
     },
-    "beeGfsMasterName": {
-      "value": "beegfsmaster"
-    },
-    "beeGfsMasterIpAddress": {
-      "value": "192.168.0.4"
-    },
-    "sharedStorageMountPoint": {
-      "value": "/beegfs"
-    },
-    "beeGfsSmbServersVip": {
-      "value": "192.168.0.55"
-    },
-    "beeGfsSmbServerARecordName": {
-      "value": "beegfs"
-    },
     "photoscanAbsolutePaths": {
       "value": 0
     },
-    "nfsSharedStorageHpcUserHomeFolder": {
-      "value": "/mnt/beegfshome"
+    "useNfsStorage": {
+      "value": "yes"
+    },
+    "useBeeGfsStorage": {
+      "value": "no"
+    },
+     "storageVnetRG": {
+      "value": "avere-eus"
+    },
+    "storageVnetName": {
+      "value": "avere-eus-vnet"
+    },
+    "sharedNfsStorageHpcUserHomeFolder": {
+      "value": "/mnt/vfxt-home"
+    },
+    "homeNfsExportPath": {
+      "value": "/home"
+    },
+    "sharedScracthMountPoint": {
+      "value": "/mnt/vfxt-data"
+    },
+    "nfsScratchExportPath": {
+      "value": "/data"
+    },
+    "nfsDnsEntry": {
+      "value": "vfxt,10.1.0.17,10.1.0.18,10.1.0.19,10.1.0.20"
+    },
+    "nfsScratchFolderNfsVersion":{
+      "value":"nfs"
+    },
+    "nfsHomeFolderNfsVersion":{
+      "value": "nfs"
+    },
+    "nfsScratchMountOptions":{
+      "value":"noatime"
+    },
+    "nfsExportPathUNC":{
+      "value": "\\\\vfxt\\!\\data"
+    },
+    "nfsMapDriveLetter":{
+      "value":"z:"
     },
     "hpcUser": {
       "value": "hpcuser"

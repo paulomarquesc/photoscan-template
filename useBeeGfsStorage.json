@@ -41,7 +41,7 @@
         "description": "Name suffix to be used in the GPU Nodes."
       }
     },
-    "gpuNodesCount": {
+    "nodeCount": {
       "type": "int",
       "metadata": {
         "description": "Number of GPU VM Nodes."
@@ -71,20 +71,20 @@
         "description": "Object that contains library paths, api versions, SAS token, from master template."
       }
     },
-    "sharedStorageMountPoint":{
+    "sharedScracthMountPoint":{
       "type": "string",
       "metadata": {
         "description": "Folder path where Shared Storage volume will be mounted on Linux VMs."
       }
     },
-    "nfsSharedStorageHpcUserHomeFolder": {
+    "sharedNfsStorageHpcUserHomeFolder": {
       "type": "string",
       "defaultValue": "/mnt/beegfshome",
       "metadata": {
         "description": "This indicates shared storage mount point on Linux VM nodes for the hpcuser home folder, it will mounted on all Linux nodes."
       }
     },
-    "nfsHomeExportPath": {
+    "homeNfsExportPath": {
       "type": "string",
       "metadata": {
         "description": "If useNfsStorage is set to 'yes', this parameter with correct values is mandatory. This is the export path configured in your NFS server for home folder of HPC User."
@@ -110,12 +110,12 @@
     "deploymentUniqueString": "[uniqueString(concat(deployment().name,resourceGroup().id))]",
     "peering1Name": "[concat(parameters('vnetName'),'-peerto-',parameters('storageVnetName'))]",
     "peering2Name": "[concat(parameters('storageVnetName'),'-peerto-',parameters('vnetName'))]",
-    "installParams": "[concat(parameters('beeGfsMasterName'),' ', parameters('sharedStorageMountPoint'),' ', parameters('nfsHomeExportPath'),' ', parameters('nfsSharedStorageHpcUserHomeFolder'),' ', parameters('hpcUser'),' ', parameters('hpcGroup'))]",
-    "gpuNodesVMsList": {
+    "installParams": "[concat(parameters('beeGfsMasterName'),' ', parameters('sharedScracthMountPoint'),' ', parameters('homeNfsExportPath'),' ', parameters('sharedNfsStorageHpcUserHomeFolder'),' ', parameters('hpcUser'),' ', parameters('hpcGroup'))]",
+    "nodeVMsList": {
       "copy": [
         {
           "name": "items",
-          "count": "[parameters('gpuNodesCount')]",
+          "count": "[parameters('nodeCount')]",
           "input": {
             "name": "[concat(parameters('nodeNameSuffix'),'-',copyIndex('items',1))]"
           }
@@ -192,7 +192,7 @@
       "condition": true,
       "comments": "CustomScript extension execution to install BeeGFS client on photoscan Node",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('gpuNodesVMsList').items[copyIndex()].name,'/CustomScript')]",
+      "name": "[concat(variables('nodeVMsList').items[copyIndex()].name,'/CustomScript')]",
       "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
       "location": "[parameters('location')]",
       "dependsOn": [
@@ -201,7 +201,7 @@
       ],
       "copy": {
         "name": "vmLinuxCustomScriptCopy",
-        "count": "[length(variables('gpuNodesVMsList').items)]"
+        "count": "[length(variables('nodeVMsList').items)]"
       },
       "properties": {
         "publisher": "Microsoft.Azure.Extensions",

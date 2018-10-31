@@ -21,6 +21,41 @@
       },
       "defaultValue": "eastus"
     },
+    "adminPassword": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin password."
+      }
+    },
+    "useSingleResourceGroup": {
+      "type": "string",
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "metadata": {
+        "description": "Whether or not use multiple resource groups, if using multiple, please change the resource groups manually in the variables section."
+      },
+      "defaultValue": "yes"
+    },
+    "activationCode": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Photoscan Activation Code."
+      }
+    },
+    "adminUsername": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of admin account of the VMs, this name cannot be well know names, like root, admin, administrator, guest, etc."
+      }
+    },
+    "sshKeyData": {
+      "type": "string",
+      "metadata": {
+        "description": "SSH rsa public key file as a string."
+      }
+    },
     "vnetName": {
       "type": "string",
       "metadata": {
@@ -77,29 +112,6 @@
       },
       "defaultValue": "10.0.2.0/24"
     },
-    "deployLinuxJumpbox": {
-      "type": "string",
-      "metadata": {
-        "description": "Should this template deploy a Linux Jumpbox"
-      },
-      "allowedValues": [
-        "yes",
-        "no"
-      ],
-      "defaultValue": "yes"
-    },
-    "adminUsername": {
-      "type": "string",
-      "metadata": {
-        "description": "Name of admin account of the VMs, this name cannot be well know names, like root, admin, administrator, guest, etc."
-      }
-    },
-    "adminPassword": {
-      "type": "string",
-      "metadata": {
-        "description": "Admin password."
-      }
-    },
     "dc1Name": {
       "type": "string",
       "metadata": {
@@ -149,28 +161,58 @@
       },
       "defaultValue": "TESTDOMAIN"
     },
-    "useSingleResourceGroup": {
+    "deployLinuxJumpbox": {
       "type": "string",
+      "metadata": {
+        "description": "Should this template deploy a Linux Jumpbox"
+      },
       "allowedValues": [
         "yes",
         "no"
       ],
-      "metadata": {
-        "description": "Whether or not use multiple resource groups, if using multiple, please change the resource groups manually in the variables section."
-      },
       "defaultValue": "yes"
     },
-    "sshKeyData": {
+    "windowsJumpboxVmName": {
       "type": "string",
       "metadata": {
-        "description": "SSH rsa public key file as a string."
-      }
+        "description": "Windows Jumpbox VM Name."
+      },
+      "defaultValue": "wjb-01"
     },
-    "activationCode": {
-      "type": "securestring",
+    "linuxJumpboxVmName": {
+      "type": "string",
       "metadata": {
-        "description": "Photoscan Activation Code."
-      }
+        "description": "Linux Jumpbox VM Name."
+      },
+      "defaultValue": "ljb-01"
+    },
+    "windowsJumpboxVmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Windows Jumpbox VM Size."
+      },
+      "defaultValue": "Standard_DS2_v2"
+    },
+    "linuxJumpboxVmSize": {
+      "type": "string",
+      "metadata": {
+        "description": "Linux Jumpbox VM Size."
+      },
+      "defaultValue": "Standard_DS2_v2"
+    },
+    "windowsJumpboxIpAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "Windows Jumpbox VM Ip Address."
+      },
+      "defaultValue": "10.0.0.4"
+    },
+    "linuxJumpboxIpAddress": {
+      "type": "string",
+      "metadata": {
+        "description": "Linux Jumpbox VM Ip Address."
+      },
+      "defaultValue": "10.0.0.5"
     },
     "headServerName": {
       "type": "string",
@@ -179,11 +221,11 @@
         "description": "Photoscan Server (head) name."
       }
     },
-    "headRoot": {
+    "headVmSize": {
       "type": "string",
-      "defaultValue": "\\\\beegfs\\beegfsshare\\Projects",
+      "defaultValue": "Standard_D8S_v3",
       "metadata": {
-        "description": "Root path where the projects are located for Server."
+        "description": "Head node VM Size."
       }
     },
     "workerNodesType": {
@@ -204,13 +246,6 @@
         "description": "Name suffix to be used in the GPU Nodes."
       }
     },
-    "nodeRoot": {
-      "type": "string",
-      "defaultValue": "/beegfs/beegfsshare/Projects",
-      "metadata": {
-        "description": "Root path where the projects are located for Nodes."
-      }
-    },
     "nodeSubnetIpAddressSuffix": {
       "type": "string",
       "metadata": {
@@ -223,6 +258,34 @@
       "defaultValue": 20,
       "metadata": {
         "description": "Nodes will have static Ip addresses, this is the start number of the host part of the class C ip address."
+      }
+    },
+    "nodeCount": {
+      "type": "int",
+      "defaultValue": 5,
+      "metadata": {
+        "description": "Number of GPU VM Nodes."
+      }
+    },
+    "nodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_NC24s_v2",
+      "metadata": {
+        "description": "GPU VM Size."
+      }
+    },
+    "headRoot": {
+      "type": "string",
+      "defaultValue": "\\\\beegfs\\beegfsshare\\Projects",
+      "metadata": {
+        "description": "Root path where the projects are located for Server."
+      }
+    },
+    "nodeRoot": {
+      "type": "string",
+      "defaultValue": "/beegfs/beegfsshare/Projects",
+      "metadata": {
+        "description": "Root path where the projects are located for Nodes."
       }
     },
     "dispatch": {
@@ -239,37 +302,37 @@
         "description": "Decimal represention of how many GPUs will be enabled for processing. E.g. 15 means 1111, that is equal to 4 GPUs."
       }
     },
-    "gpuNodesVmSize": {
+    "windowsPhotoscanDownloadUrl": {
       "type": "string",
-      "defaultValue": "Standard_NC24s_v2",
+      "defaultValue": "http://download.agisoft.com/photoscan-pro_1_4_4_x64.msi",
       "metadata": {
-        "description": "GPU VM Size."
+        "description": "Windows binary Photoscan download URL."
       }
     },
-    "gpuNodesCount": {
-      "type": "int",
-      "defaultValue": 5,
+    "linuxPhotoscanDownloadUrl": {
+      "type": "string",
+      "defaultValue": "http://download.agisoft.com/photoscan-pro_1_4_4_amd64.tar.gz",
       "metadata": {
-        "description": "Number of GPU VM Nodes."
+        "description": "Photoscan Linux binaries download URL."
       }
     },
-    "headVmSize": {
-      "type": "string",
-      "defaultValue": "Standard_D8S_v3",
-      "metadata": {
-        "description": "Head node VM Size."
-      }
-    },
-    "useBeeGfsStorage": {
+    "photoscanInstallPath": {
       "type": "string",
       "metadata": {
-        "description": "Should this template use BeeGfs storage. If this parameter is set to 'yes', make sure useNfsStorage is set to 'no'"
+        "description": "Photoscan installation path."
       },
+      "defaultValue": "/"
+    },
+    "photoscanAbsolutePaths": {
+      "type": "int",
+      "defaultValue": 0,
       "allowedValues": [
-        "yes",
-        "no"
+        0,
+        1
       ],
-      "defaultValue": "yes"
+      "metadata": {
+        "description": "Use Photoscan absolute paths. 0 = No, 1= Yes."
+      }
     },
     "useNfsStorage": {
       "type": "string",
@@ -282,19 +345,51 @@
       ],
       "defaultValue": "no"
     },
-    "nfsDnsEntry": {
+    "useBeeGfsStorage": {
       "type": "string",
       "metadata": {
-        "description": "If useNfsStorage is set to 'yes', this parameter with correct values is mandatory. Format is <DNS A Record for NFS servers>,<IP1>,<IP2>,<IP3>,<IPx>. E.g. vfxt,10.0.0.11,10.0.0.12,10.0.0.13"
+        "description": "Should this template use BeeGfs storage. If this parameter is set to 'yes', make sure useNfsStorage is set to 'no'"
       },
-      "defaultValue": ""
+      "allowedValues": [
+        "yes",
+        "no"
+      ],
+      "defaultValue": "yes"
     },
-    "nfsHomeExportPath": {
+    "storageVnetRG": {
+      "type": "string",
+      "defaultValue": "beegfs-rg-eus",
+      "metadata": {
+        "description": "Storage Vnet Resoure group name."
+      }
+    },
+    "storageVnetName": {
+      "type": "string",
+      "defaultValue": "beegfs-vnet",
+      "metadata": {
+        "description": "Srorage Virtual Network name."
+      }
+    },
+    "sharedNfsStorageHpcUserHomeFolder": {
+      "type": "string",
+      "defaultValue": "/mnt/beegfshome",
+      "metadata": {
+        "description": "This indicates shared storage mount point on Linux VM nodes for the hpcuser home folder, it will mounted on all Linux nodes."
+      }
+    },
+    "homeNfsExportPath": {
       "type": "string",
       "metadata": {
         "description": "If useNfsStorage is set to 'yes', this parameter with correct values is mandatory. This is the export path configured in your NFS server for home folder of HPC User."
       },
       "defaultValue": "/home"
+    },
+    "sharedScracthMountPoint": {
+      "type": "string",
+      "metadata": {
+        "description": "Folder path where Shared Storage volume will be mounted on Linux VMs.."
+      },
+      "defaultValue": "/beegfs"
     },
     "nfsScratchExportPath": {
       "type": "string",
@@ -303,32 +398,46 @@
       },
       "defaultValue": "/data"
     },
+    "nfsDnsEntry": {
+      "type": "string",
+      "metadata": {
+        "description": "If useNfsStorage is set to 'yes', this parameter with correct values is mandatory. Format is <DNS A Record for NFS servers>,<IP1>,<IP2>,<IP3>,<IPx>. E.g. vfxt,10.0.0.11,10.0.0.12,10.0.0.13"
+      },
+      "defaultValue": ""
+    },
     "nfsScratchFolderNfsVersion": {
       "type": "string",
       "metadata": {
         "description": "NFS Version used to mount scratch (data) folder. Will be used only when NFS storage is in use."
       },
-      "defaultValue": "nfs4",
+      "defaultValue": "nfs",
       "allowedValues": [
         "nfs",
         "nfs4"
       ]
     },
-    "homeFolderNfsVersion": {
+    "nfsHomeFolderNfsVersion": {
       "type": "string",
       "metadata": {
         "description": "NFS Version used to mount home folder for HPC User. When using BeeGFS, this value must be nfs4, if using Avere vFXT it must be nfs."
       },
-      "defaultValue": "nfs4",
+      "defaultValue": "nfs",
       "allowedValues": [
         "nfs",
         "nfs4"
       ]
     },
+    "nfsScratchMountOptions": {
+      "type": "string",
+      "metadata": {
+        "description": "NFS scracth volumne mount options, comma separated, no spaces. E.g. noatime,rsize=524288,wsize=524288."
+      },
+      "defaultValue": "defaults"
+    },
     "nfsExportPathUNC": {
       "type": "string",
       "metadata": {
-        "description": "UNC NFS Export path. E.g. \\\\vfxt\\!\\msazure"
+        "description": "UNC NFS Export path, this value is used by Windows Scheduler (Head) to map the NFS path to a drive letter when using NFS storage. E.g. \\\\vfxt\\!\\msazure"
       },
       "defaultValue": "\\\\vfxt\\!\\msazure"
     },
@@ -350,7 +459,7 @@
       },
       "defaultValue": "z:"
     },
-    "nfsNoCaseSensitiveLookup": {
+    "nfsCaseSensitiveLookup": {
       "type": "bool",
       "metadata": {
         "description": "Sets that NFS will use case sensitive lookups."
@@ -395,41 +504,6 @@
       "defaultValue": 64,
       "maxValue": 64
     },
-    "storageVnetRG": {
-      "type": "string",
-      "defaultValue": "beegfs-rg-eus",
-      "metadata": {
-        "description": "Storage Vnet Resoure group name."
-      }
-    },
-    "storageVnetName": {
-      "type": "string",
-      "defaultValue": "beegfs-vnet",
-      "metadata": {
-        "description": "Srorage Virtual Network name."
-      }
-    },
-    "linuxPhotoscanDownloadUrl": {
-      "type": "string",
-      "defaultValue": "http://download.agisoft.com/photoscan-pro_1_4_4_amd64.tar.gz",
-      "metadata": {
-        "description": "Photoscan Linux binaries download URL."
-      }
-    },
-    "windowsPhotoscanDownloadUrl": {
-      "type": "string",
-      "defaultValue": "http://download.agisoft.com/photoscan-pro_1_4_4_x64.msi",
-      "metadata": {
-        "description": "Windows binary Photoscan download URL."
-      }
-    },
-    "photoscanInstallPath": {
-      "type": "string",
-      "metadata": {
-        "description": "Photoscan installation path."
-      },
-      "defaultValue": "/"
-    },
     "beeGfsMasterName": {
       "type": "string",
       "defaultValue": "beegfsmaster",
@@ -444,13 +518,6 @@
         "description": "BeeGFS Master Ip address, this will be added as an A record on DNS."
       }
     },
-    "sharedStorageMountPoint": {
-      "type": "string",
-      "metadata": {
-        "description": "Folder path where Shared Storage volume will be mounted on Linux VMs.."
-      },
-      "defaultValue": "/beegfs"
-    },
     "beeGfsSmbServersVip": {
       "type": "string",
       "defaultValue": "192.168.0.55",
@@ -463,66 +530,6 @@
       "defaultValue": "beegfs",
       "metadata": {
         "description": "BeeGFS A record to be used by Photoscan Server (Head)."
-      }
-    },
-    "photoscanAbsolutePaths": {
-      "type": "int",
-      "defaultValue": 0,
-      "allowedValues": [
-        0,
-        1
-      ],
-      "metadata": {
-        "description": "Use Photoscan absolute paths. 0 = No, 1= Yes."
-      }
-    },
-    "windowsJumpboxVmSize": {
-      "type": "string",
-      "metadata": {
-        "description": "Windows Jumpbox VM Size."
-      },
-      "defaultValue": "Standard_DS2_v2"
-    },
-    "linuxJumpboxVmSize": {
-      "type": "string",
-      "metadata": {
-        "description": "Linux Jumpbox VM Size."
-      },
-      "defaultValue": "Standard_DS2_v2"
-    },
-    "windowsJumpboxVmName": {
-      "type": "string",
-      "metadata": {
-        "description": "Windows Jumpbox VM Name."
-      },
-      "defaultValue": "wjb-01"
-    },
-    "linuxJumpboxVmName": {
-      "type": "string",
-      "metadata": {
-        "description": "Linux Jumpbox VM Name."
-      },
-      "defaultValue": "ljb-01"
-    },
-    "windowsJumpboxIpAddress": {
-      "type": "string",
-      "metadata": {
-        "description": "Windows Jumpbox VM Ip Address."
-      },
-      "defaultValue": "10.0.0.4"
-    },
-    "linuxJumpboxIpAddress": {
-      "type": "string",
-      "metadata": {
-        "description": "Linux Jumpbox VM Ip Address."
-      },
-      "defaultValue": "10.0.0.5"
-    },
-    "nfsSharedStorageHpcUserHomeFolder": {
-      "type": "string",
-      "defaultValue": "/mnt/beegfshome",
-      "metadata": {
-        "description": "This indicates shared storage mount point on Linux VM nodes for the hpcuser home folder, it will mounted on all Linux nodes."
       }
     },
     "hpcUser": {
@@ -601,6 +608,7 @@
     "photoscanLinuxNodesUrl": "[concat(variables('baseUrl'),'/photoscanLinuxNodes.json',parameters('_artifactsLocationSasToken'))]",
     "photoscanWindowsNodesUrl": "[concat(variables('baseUrl'),'/photoscanWindowsNodes.json',parameters('_artifactsLocationSasToken'))]",
     "useBeeGfsStorageUrl": "[concat(variables('baseUrl'),'/useBeeGfsStorage.json',parameters('_artifactsLocationSasToken'))]",
+    "useNfsStorageUrl":"[concat(variables('baseUrl'),'/useNfsStorage.json',parameters('_artifactsLocationSasToken'))]",
     "resourceGroups": {
       "networkingRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'),resourceGroup().Name, 'photoscan-rg')]",
       "jumpBoxRg": "[if(equals(parameters('useSingleResourceGroup'),'yes'), resourceGroup().Name, 'photoscan-rg')]",
@@ -962,11 +970,11 @@
           "gpuMask": {
             "value": "[parameters('gpuMask')]"
           },
-          "gpuNodesCount": {
-            "value": "[parameters('gpuNodesCount')]"
+          "nodeCount": {
+            "value": "[parameters('nodeCount')]"
           },
-          "gpuNodesVmSize": {
-            "value": "[parameters('gpuNodesVmSize')]"
+          "nodeVmSize": {
+            "value": "[parameters('nodeVmSize')]"
           },
           "linuxPhotoscanDownloadUrl": {
             "value": "[parameters('linuxPhotoscanDownloadUrl')]"
@@ -980,8 +988,14 @@
           "hpcUser": {
             "value": "[parameters('hpcUser')]"
           },
+          "hpcUid":{
+            "value":"[parameters('hpcUid')]"
+          },
           "hpcGroup": {
             "value": "[parameters('hpcGroup')]"
+          },
+          "hpcGid":{
+            "value":"[parameters('hpcGid')]"
           }
         }
       }
@@ -1057,11 +1071,11 @@
           "gpuMask": {
             "value": "[parameters('gpuMask')]"
           },
-          "gpuNodesCount": {
-            "value": "[parameters('gpuNodesCount')]"
+          "nodeCount": {
+            "value": "[parameters('nodeCount')]"
           },
-          "gpuNodesVmSize": {
-            "value": "[parameters('gpuNodesVmSize')]"
+          "nodeVmSize": {
+            "value": "[parameters('nodeVmSize')]"
           },
           "windowsPhotoscanDownloadUrl": {
             "value": "[parameters('windowsPhotoscanDownloadUrl')]"
@@ -1107,8 +1121,8 @@
           "nodeNameSuffix": {
             "value": "[parameters('nodeNameSuffix')]"
           },
-          "gpuNodesCount": {
-            "value": "[parameters('gpuNodesCount')]"
+          "nodeCount": {
+            "value": "[parameters('nodeCount')]"
           },
           "deploymentConfig": {
             "value": "[variables('deploymentConfig')]"
@@ -1128,20 +1142,136 @@
           "beeGfsMasterName": {
             "value": "[parameters('beeGfsMasterName')]"
           },
-          "sharedStorageMountPoint": {
-            "value": "[parameters('sharedStorageMountPoint')]"
+          "sharedScracthMountPoint": {
+            "value": "[parameters('sharedScracthMountPoint')]"
           },
-          "nfsSharedStorageHpcUserHomeFolder": {
-            "value": "[parameters('nfsSharedStorageHpcUserHomeFolder')]"
+          "sharedNfsStorageHpcUserHomeFolder": {
+            "value": "[parameters('sharedNfsStorageHpcUserHomeFolder')]"
           },
-          "nfsHomeExportPath": {
-            "value": "[parameters('nfsHomeExportPath')]"
+          "homeNfsExportPath": {
+            "value": "[parameters('homeNfsExportPath')]"
           },
           "hpcUser": {
             "value": "[parameters('hpcUser')]"
           },
           "hpcGroup": {
             "value": "[parameters('hpcGroup')]"
+          }
+        }
+      }
+    },
+    {
+      "condition": "[and(equals(parameters('useNfsStorage'),'yes'), and(equals(parameters('workerNodesType'),'linux'),equals(parameters('useBeeGfsStorage'),'no')))]",
+      "comments": "Configure Linux Nodes to use NFS",
+      "name": "[concat(variables('deploymentUniqueString'),'-nodes-attach-NFS')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "[variables('deploymentConfig').apiVersions.deploymentApiVersion]",
+      "resourceGroup": "[variables('resourceGroups').photoscanRg]",
+      "dependsOn": [
+        "[if(equals(parameters('workerNodesType'),'linux'),concat(variables('deploymentUniqueString'),'-LinuxNodes'),concat(variables('deploymentUniqueString'),'-LinuxNodes-Invalid'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[variables('useNfsStorageUrl')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "_artifactsLocation": {
+            "value": "[parameters('_artifactsLocation')]"
+          },
+          "_artifactsLocationSasToken": {
+            "value": "[parameters('_artifactsLocationSasToken')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "nodeNameSuffix": {
+            "value": "[parameters('nodeNameSuffix')]"
+          },
+          "nodeCount": {
+            "value": "[parameters('nodeCount')]"
+          },
+          "deploymentConfig": {
+            "value": "[variables('deploymentConfig')]"
+          },
+          "vnetName": {
+            "value": "[parameters('vnetName')]"
+          },
+          "vnetRg": {
+            "value": "[variables('resourceGroups').networkingRg]"
+          },
+          "headServerName":{
+            "value":"[parameters('headServerName')]"
+          },
+          "storageVnetRG": {
+            "value": "[parameters('storageVnetRG')]"
+          },
+          "storageVnetName": {
+            "value": "[parameters('storageVnetName')]"
+          },
+          "sharedScracthMountPoint": {
+            "value": "[parameters('sharedScracthMountPoint')]"
+          },
+          "sharedNfsStorageHpcUserHomeFolder": {
+            "value": "[parameters('sharedNfsStorageHpcUserHomeFolder')]"
+          },
+          "nfsScratchExportPath":{
+            "value":"[parameters('nfsScratchExportPath')]"
+          },
+          "homeNfsExportPath": {
+            "value": "[parameters('homeNfsExportPath')]"
+          },
+          "nfsMapDriveLetter": {
+            "value":"[parameters('nfsMapDriveLetter')]"
+          },
+          "nfsExportPathUNC" :{
+            "value":"[parameters('nfsExportPathUNC')]"
+          },
+          "nfsMountType": {
+            "value":"[parameters('nfsMountType')]"
+          },
+          "nfsScratchFolderNfsVersion": {
+            "value":"[parameters('nfsScratchFolderNfsVersion')]"
+          },
+          "nfsHomeFolderNfsVersion": {
+            "value":"[parameters('nfsHomeFolderNfsVersion')]"
+          },
+          "nfsScratchMountOptions": {
+            "value":"[parameters('nfsScratchMountOptions')]"
+          },
+          "nfsCaseSensitiveLookup":{
+            "value":"[parameters('nfsCaseSensitiveLookup')]"
+          },
+          "nfsTimeout":{
+            "value":"[parameters('nfsTimeout')]"
+          },
+          "nfsMountRetry":{
+            "value":"[parameters('nfsMountRetry')]"
+          },
+          "nfsDefaultAccessMode":{
+            "value":"[parameters('nfsDefaultAccessMode')]"
+          },
+          "nfsWindowsRsizeKb":{
+            "value":"[parameters('nfsWindowsRsizeKb')]"
+          },
+          "nfsWindowsWsizeKb":{
+            "value":"[parameters('nfsWindowsWsizeKb')]"
+          },
+          "nfsDnsEntry": {
+            "value":"[parameters('nfsDnsEntry')]"
+          },
+          "hpcUser": {
+            "value": "[parameters('hpcUser')]"
+          },
+          "hpcGroup": {
+            "value": "[parameters('hpcGroup')]"
+          },
+          "hpcUid":{
+            "value":"[parameters('hpcUid')]"
+          },
+          "hpcGid":{
+            "value":"[parameters('hpcGid')]"
           }
         }
       }

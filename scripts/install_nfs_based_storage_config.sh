@@ -8,110 +8,78 @@ if [[ $(id -u) -ne 0 ]] ; then
 fi
 
 if [ $# -lt 2 ]; then
-    echo "Usage: $0 <ManagementHost> <Mount> <homeNfsExportPath> <sharedNfsStorageHpcUserHomeFolder> <hpcuser> <hpcgroup>"
+    echo "Usage: $0 <nfsHostName> <nfsScratchExportPath> <Mount> <homeNfsExportPath> <sharedNfsStorageHpcUserHomeFolder> <nfsScratchFolderNfsVersion> <nfsHomeFolderNfsVersion> <nfsScratchMountOptions> <HpcUser> <HpcGroup> <customDomain>"
     exit 1
 fi
 
-SCRIPT_NAME=$0
-MGMT_HOSTNAME=$1
+SCRIPT_NAME=$(echo $0 | sed 's/\.\///g')
+
+# NFS Host A record
+if [[ ! -z "${1:-}" ]]; then
+	NFS_HOSTNAME=$1
+else
+	echo "You must supply NFS hostname"
+	exit 1
+fi
+
+# Scratch export path
+NFS_SCRATCH="/data"
+if [[ ! -z "${2:-}" ]]; then
+	NFS_SCRATCH=$2
+fi
 
 # Share
-SHARE_SCRATCH="/beegfs"
-if [[ ! -z "${2:-}" ]]; then
-	SHARE_SCRATCH=$2
-fi
-
-NFS_HOME_EXPORT="/mnt/beegfshome"
+SHARE_SCRATCH="/mnt/vfxt-data"
 if [[ ! -z "${3:-}" ]]; then
-	NFS_HOME_EXPORT="$3"
+	SHARE_SCRATCH=$3
 fi
 
-SHARE_HOME="/mnt/beegfshome"
+NFS_HOME_EXPORT="/home"
 if [[ ! -z "${4:-}" ]]; then
-	SHARE_HOME="$4"
+	NFS_HOME_EXPORT="$4"
+fi
+
+SHARE_HOME="/mnt/vfxt-home"
+if [[ ! -z "${5:-}" ]]; then
+	SHARE_HOME="$5"
+fi
+
+SCRATCH_NFS_VERSION="nfs"
+if [[ ! -z "${6:-}" ]]; then
+	SCRATCH_NFS_VERSION=$6
+fi
+
+HOME_NFS_VERSION="nfs"
+if [[ ! -z "${7:-}" ]]; then
+	HOME_NFS_VERSION=$7
+fi
+
+SCRATCH_MOUNT_OPTIONS="defaults"
+if [[ ! -z "${8:-}" ]]; then
+	SCRATCH_MOUNT_OPTIONS=$8
 fi
 
 # User
 HPC_USER="hpcuser"
-if [[ ! -z "${5:-}" ]]; then
-	HPC_USER="$5"
+if [[ ! -z "${9:-}" ]]; then
+	HPC_USER="$9"
 fi
 
 HPC_GROUP="hpcgroup"
-if [[ ! -z "${6:-}" ]]; then
-	HPC_GROUP="${6}"
+if [[ ! -z "${10:-}" ]]; then
+	HPC_GROUP="${10}"
 fi
 
-BEEGFS_NODE_TYPE="client"
-
-is_client()
-{
-	if [ "$BEEGFS_NODE_TYPE" == "client" ] || is_management ; then 
-		return 0
-	fi
-	return 1
-}
-
-# Installs all required packages.
-install_kernel_pkgs()
-{
-	HOST="buildlogs.centos.org"
-	CENTOS_MAJOR_VERSION=$(cat /etc/centos-release | awk '{print $4}' | awk -F"." '{print $1}')
-	CENTOS_MINOR_VERSION=$(cat /etc/centos-release | awk '{print $4}' | awk -F"." '{print $3}')
-	KERNEL_LEVEL_URL="https://$HOST/c$CENTOS_MAJOR_VERSION.$CENTOS_MINOR_VERSION.u.x86_64/kernel"
-
-	cd ~/
-	wget -r -l 1 $KERNEL_LEVEL_URL
-	
-	RESULT=$(find . -name "*.html" -print | xargs grep `uname -r`)
-
-	RELEASE_DATE=$(echo $RESULT | awk -F"/" '{print $5}')
-
-	KERNEL_ROOT_URL="$KERNEL_LEVEL_URL/$RELEASE_DATE/`uname -r`"
-
-	KERNEL_PACKAGES=()
-	#KERNEL_PACKAGES+=("$KERNEL_ROOT_URL/kernel-`uname -r | sed 's/.x86_64*//'`.src.rpm")
-	KERNEL_PACKAGES+=("$KERNEL_ROOT_URL/kernel-devel-`uname -r`.rpm")
-	KERNEL_PACKAGES+=("$KERNEL_ROOT_URL/kernel-headers-`uname -r`.rpm")
-	KERNEL_PACKAGES+=("$KERNEL_ROOT_URL/kernel-tools-libs-devel-`uname -r`.rpm")
-	
-	sudo yum install -y ${KERNEL_PACKAGES[@]}
-}
+CUSTOMDOMAIN=""
+if [[ ! -z "${11:-}" ]]; then
+	CUSTOMDOMAIN="${11}"
+fi
 
 install_pkgs()
 {
     sudo yum -y install epel-release
 	sudo yum -y install kernel-devel kernel-headers kernel-tools-libs-devel gcc gcc-c++
     sudo yum -y install zlib zlib-devel bzip2 bzip2-devel bzip2-libs openssl openssl-devel openssl-libs nfs-utils rpcbind mdadm wget python-pip openmpi openmpi-devel automake autoconf
-	
-	if [ ! -e "/usr/src/kernels/`uname -r`" ]; then
-		echo "Kernel packages matching kernel version `uname -r` not installed. Executing alternate package install..."
-		install_kernel_pkgs
-	fi
-}
-
-install_beegfs_repo()
-{
-	sudo wget -O /etc/yum.repos.d/beegfs-rhel7.repo https://www.beegfs.io/release/beegfs_7_1/dists/beegfs_rhel7.repo
-	sudo rpm --import https://www.beegfs.io/release/latest-stable/gpg/RPM-GPG-KEY-beegfs
-}
-
-install_beegfs()
-{
-	if is_client; then
-	    if [ ! -e "$SHARE_SCRATCH" ]; then
-            mkdir -p $SHARE_SCRATCH
-        fi
-
-		yum install -y beegfs-client beegfs-helperd beegfs-utils
-		# setup client
-		sed -i 's/^sysMgmtdHost.*/sysMgmtdHost = '$MGMT_HOSTNAME'/g' /etc/beegfs/beegfs-client.conf
-		echo "$SHARE_SCRATCH /etc/beegfs/beegfs-client.conf" > /etc/beegfs/beegfs-mounts.conf
-	
-		systemctl daemon-reload
-		systemctl enable beegfs-helperd.service
-		systemctl enable beegfs-client.service
-	fi
 }
 
 tune_tcp()
@@ -126,13 +94,33 @@ kill_hpcuser_process()
     ps -aux | grep "$HPC_USER" | grep -v "grep" | grep -v "$SCRIPT_NAME" | awk '{print $2}' | $(while read pid; do kill -9 $pid || true; done) || true
 }
 
+run_photoscan_process_from_cron()
+{
+	CMD=$(crontab -l | grep "photoscan" | grep -v '^#' | cut -f 6- -d ' ' | cut -c 9- | sed 's/\/\//\//g' | sed 's/\x27//g')
+	sudo -H -u hpcuser bash -c "$CMD" &
+}
+
+setup_nfs_scracth_mount()
+{
+
+    if [ ! -e "$SHARE_SCRATCH" ]; then
+        mkdir -p $SHARE_SCRATCH
+    fi
+
+	echo "$NFS_HOSTNAME:$NFS_SCRATCH     $SHARE_SCRATCH $SCRATCH_NFS_VERSION $SCRATCH_MOUNT_OPTIONS 0 0" >> /etc/fstab
+	mount -a
+	mount
+   
+  	chown $HPC_USER:$HPC_GROUP $SHARE_SCRATCH
+}
+
 setup_user()
 {
     if [ ! -e "$SHARE_HOME" ]; then
         sudo mkdir -p $SHARE_HOME
     fi
 
-	echo "$MGMT_HOSTNAME:$NFS_HOME_EXPORT $SHARE_HOME    nfs4 defaults 0 0" >> /etc/fstab
+	echo "$NFS_HOSTNAME:$NFS_HOME_EXPORT $SHARE_HOME    $HOME_NFS_VERSION defaults 0 0" >> /etc/fstab
 	mount -a
 	mount
 
@@ -207,28 +195,17 @@ EOF
 	rm LIScron
 }
 
-SETUP_MARKER=/var/local/install_beegfs_client.marker
+SETUP_MARKER=/var/local/install_nfs_based_storage.marker
 if [ -e "$SETUP_MARKER" ]; then
     echo "We're already configured, exiting..."
     exit 0
 fi
 
-systemctl stop firewalld
-systemctl disable firewalld
-
-# Disable SELinux
-sed -i 's/SELINUX=.*/SELINUX=disabled/g' /etc/selinux/config
-setenforce 0
-
-# Disable tty requirement for sudo
-sed -i 's/^Defaults[ ]*requiretty/# Defaults requiretty/g' /etc/sudoers
-
 install_pkgs
 tune_tcp
-install_beegfs_repo
-install_beegfs
 download_lis
 install_lis_in_cron
+setup_nfs_scracth_mount
 setup_user
 
 # Create marker file so we know we're configured

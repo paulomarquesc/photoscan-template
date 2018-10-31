@@ -91,7 +91,7 @@ install_photoscan_node_script_in_cron()
 {
 	echo "install_photoscan_node_script_in_cron"
 	! crontab -l > photoscan_cron
-	echo "@reboot sudo -H -u $HPC_USER bash -c 'xvfb-run $PHOTOSCAN_FOLDER/photoscan.sh --node --dispatch $DISPATCH --root $ROOT_PATH --gpu_mask $GPU_MASK --timestamp --aboslute_paths $ABSOLUTE_PATHS'" >> photoscan_cron
+	echo "@reboot sudo -H -u $HPC_USER bash -c 'xvfb-run $PHOTOSCAN_FOLDER/photoscan.sh --node --dispatch $DISPATCH --root $ROOT_PATH --gpu_mask $GPU_MASK --timestamp --absolute_paths $ABSOLUTE_PATHS'" >> photoscan_cron
 	crontab photoscan_cron
 	rm photoscan_cron
 }

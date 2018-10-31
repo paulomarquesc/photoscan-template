@@ -109,13 +109,13 @@
         "description": "Decimal represention of how many GPUs will be enabled for processing. E.g. 15 means 1111, that is equal to 4 GPUs."
       }
     },
-    "gpuNodesVmSize": {
+    "nodeVmSize": {
       "type": "string",
       "metadata": {
         "description": "GPU VM Size."
       }
     },
-    "gpuNodesCount": {
+    "nodeCount": {
       "type": "int",
       "metadata": {
         "description": "Number of GPU VM Nodes."
@@ -165,13 +165,13 @@
       "copy": [
         {
           "name": "items",
-          "count": "[parameters('gpuNodesCount')]",
+          "count": "[parameters('nodeCount')]",
           "input": {
             "name": "[concat(parameters('nodeNameSuffix'),'-',copyIndex('items',1))]",
             "storageAccountType": "Premium_LRS",
             "osDiskSizeGB": 128,
             "subnetId": "[variables('subnetId')]",
-            "vmSize": "[parameters('gpuNodesVmSize')]",
+            "vmSize": "[parameters('nodeVmSize')]",
             "privateIpAddress": "[concat(parameters('nodeSubnetIpAddressSuffix'),'.',add(copyIndex('items',1),parameters('nodeStartIpAddress')))]",
             "availabilitySetId": "[resourceId('Microsoft.Compute/availabilitySets',variables('avSetInfo')[0].availabilitySetName)]",
             "imageInfo": {
@@ -214,7 +214,7 @@
       "apiVersion": "[parameters('deploymentConfig').apiVersions.deploymentApiVersion]",
       "copy": {
         "name": "WindowsNodesCopy",
-        "count":"[parameters('gpuNodesCount')]"
+        "count":"[parameters('nodeCount')]"
       },
       "dependsOn": [
         "avSetCopy"
@@ -330,7 +330,7 @@
         "nvidiadriversCopy"
       ],
       "copy": {
-        "count":"[parameters('gpuNodesCount')]",
+        "count":"[parameters('nodeCount')]",
         "name": "windowsNodesdomainJoinCopy"
       },
       "properties": {
@@ -373,7 +373,7 @@
       ],
       "copy": {
         "name":"customScriptCopy",
-        "count":"[parameters('gpuNodesCount')]"
+        "count":"[parameters('nodeCount')]"
       },
       "properties": {
         "publisher": "Microsoft.Compute",
