@@ -96,7 +96,7 @@ If you want to deploy Windows worker nodes, storage configuration will need to b
 
 `workerNodesType = "windows"`
 
-> Note: this change can be done on both provided parameters file or in just the one you will use to perform the deployment since the first two parameters listed will make the template ignore any of the storage solutions.
+> Note: this change can be done on both provided parameter files or in just the one you will use to perform the deployment since the first two parameters listed will make the template ignore any of the storage solutions.
 
 ### Template parameters and descriptions
 
