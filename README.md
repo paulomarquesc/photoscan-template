@@ -1,19 +1,27 @@
 # Photoscan-template
-Sample templates and scripts that deploys [Agisoft Photoscan](http://www.agisoft.com) product in Azure. This template was designed to work with two storage solutions, one is BeeGFS and the other one is Avere vFXT, which is now a Microsoft product.
+Sample templates and scripts that deploys [Agisoft Photoscan](http://www.agisoft.com) product in Azure. This template was designed to work with two storage solutions, one is Avere vFXT (a Microsoft product) and the other one is BeeGFS.
 
-<TODO:Update section for Avere>
-sample template that deploys BeeGFS storage solution, for a complete end-to-end scenario please deploy [this](https://github.com/paulomarquesc/beegfs-template) template first. This is not a hard-requirement, you can use other storage solutions but the template will offer full automation if you rely on that BeeGFS template, otherwise, make sure you make the necessary adjustments in your cloned template.
+For an end to end experience, before you deploy this template you need to deploy one of the storage solutions mentioned before, links for their deployment will be provided at the Prequisites section. The following diagrams shows a high level view of VM components deployed depending on what storage solution was chosen. 
 
-In summary, this template will deploy a virtual network with the following components:
+### Avere vFXT
+![image](./docs/media/avere.png)
 
-![image](./media/photoscan.png)
+### BeeGFS
+![image](./docs/media/beegfs.png)
 
-This solution is break down into the following components, infrastructure items (Active Directory), Jumpboxes so you can connect to the environment, the Photoscan Scheduler (head) node and the processing nodes, finally, if you are using BeeGFS as your backend storage deployed using this [beegfs-template](https://github.com/paulomarquesc/beegfs-template), you can automatically peer the two virtual networks and install BeeGFS client on your processing nodes automatically with this template.
+https://github.com/Azure/Avere/tree/master/src/vfxt#experimental-avere-vfxt-controller-and-vfxt---arm-template-deployment
 
-A sample deployment script called Deploy-AzureResourceGroup.sh is provided with this solution and you can use it to help automate your deployment. This is a minimal sample command line example which creates a staging storage account to hold all deployment related files (if you don't provide the storage account name and its resource group, it will keep creating new storage accounts:
+This solution is break down into the following components:
+* Infrastructure items (Active Directory)
+* Jumpboxes so you can connect to the environment
+* Photoscan Scheduler (head) node 
+* Processing nodes (compute)
+* When using Avere vFXT or BeeGFS provided templates, this template will automatically peer to the storage template virtual network
+
+A sample deployment script called Deploy-AzureResourceGroup.sh is provided with this solution and you can use it to help automate your deployment. This is a minimal sample command line example which creates a staging storage account to hold all deployment related files (if you don't provide the storage account name and its resource group, it will create one for you) and deploy using Avere vFXT option (selection is made depending on what parameter file you choose):
 
 ```bash
-./Deploy-AzureResourceGroup.sh -g myResourceGroup -l eastus -r support-rg -v keyvaultname
+./Deploy-AzureResourceGroup.sh -g myResourceGroup -l eastus -r support-rg -v keyvaultname -p azuredeploy.parameters.avere.json
 ```
 
 ## Prerequisites
@@ -21,9 +29,13 @@ A sample deployment script called Deploy-AzureResourceGroup.sh is provided with 
     *  adminPassword - this will be your Domain Admin and Local Windows Administrators password
     *  activationCode - this is the Photoscan activation code, make sure you have a valid code or request a trial at their web site.
     
-2. To get end to end automation, please deploy this [BeeGFS](https://github.com/paulomarquesc/beegfs-template) template first.
+2. To get end to end automation with this template, please deploy one of the storage template solutions this Photoscan template was designed for: 
+   * [Avere vFXT](https://github.com/Azure/Avere/tree/master/src/vfxt#experimental-avere-vfxt-controller-and-vfxt---arm-template-deployment)
+       *  After you deployed Avere vFXT, make sure you follow the steps documented here to create NFS exports and Namespaces correctly.
+    
+   * [BeeGFS](https://github.com/paulomarquesc/beegfs-template).
    
-3. Please make sure you review the parameter file before starting the deployment.
+3. There are two parameter files, one for Avere vFXT (`azuredeploy.parameters.avere.json`) and one for BeeGFS (`azuredeploy.parameters.beegfs.json`), please make sure you review the parameter file related to your storage option before starting the deployment.
 
 ## Deployment Steps
 
@@ -32,24 +44,24 @@ A sample deployment script called Deploy-AzureResourceGroup.sh is provided with 
 
 1. Sign on with `Microsoft Account` or `Work or School Account` associated with your Azure subscription
 
-    ![image](./media/image1.png)
+    ![image](./docs/media/image1.png)
 
 
 1. If you have access to more than one Azure Active Directory tenant, Select the Azure directory that is associated with your Azure subscription
     
-    ![image](./media/image2.png)
+    ![image](./docs/media/image2.png)
 
 1. If this is the first time you accessed the Cloud Shell, `Select` "Bash (Linux)" when asked which shell to use.
 
-    ![image](./media/image3.png)
+    ![image](./docs/media/image3.png)
 
     > Note: If this is not the first time and it is the "Powershell" shell that starts, please click in the dropdown box that shows "PowerShell" and select "Bash" instead.
 
 1. If you have at least contributor rights at subscription level, please select which subscription you would like the initialization process to create a storage account and click "Create storage" button.
-    ![image](./media/image4.png)
+    ![image](./docs/media/image4.png)
 
 1. You should see a command prompt like this one:
-    ![image](./media/image5.png)
+    ![image](./docs/media/image5.png)
 
 
 ### Cloning the source sample project
@@ -108,7 +120,8 @@ To
     },
 ```
 
-### List of parameters per template and their descriptions
+### Template parameters and descriptions
+
 #### azuredeploy.parameters.json
 * **_artifactsLocation:** Auto-generated container in staging storage account to receive post-build staging folder upload.
 * **_artifactsLocationSasToken:** Auto-generated token to access _artifactsLocation.
@@ -143,7 +156,7 @@ To
 * **headServerName:** Photoscan Server (head) name. Default Value: `headnode`
 * **headVmSize:** Head node VM Size. Default Value: `Standard_D8S_v3`
 * **workerNodesType:** OS type of worker nodes, Linux or Windows. Default Value: `linux`
-* **nodeNameSuffix:** Name suffix to be used in the GPU Nodes. Default Value: `workernode`
+* **nodeNamePrefix:** Name suffix to be used in the GPU Nodes. Default Value: `workernode`
 * **nodeSubnetIpAddressSuffix:** Nodes will have static Ip addresses, this is the network part of a class C subnet. Default Value: `10.0.1`
 * **nodeStartIpAddress:** Nodes will have static Ip addresses, this is the start number of the host part of the class C ip address. Default Value: `20`
 * **nodeCount:** Number of GPU VM Nodes. Default Value: `5`
