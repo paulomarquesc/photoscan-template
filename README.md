@@ -91,7 +91,9 @@ By default the template deploys the worker nodes as Linux VMs, for an end-to-end
 If you want to deploy Windows worker nodes, storage configuration will need to be manual because neither storage solutions are native to Windows at this point. To use Windows compute nodes, please make sure you change the following parameters in any of the parameter file before deploying this template:
 
 `useNfsStorage = "no"`
+
 `useBeeGfsStorage = "no"`
+
 `workerNodesType = "windows"`
 
 > Note: this change can be done on both provided parameters file or in just the one you will use to perform the deployment since the first two parameters listed will make the template ignore any of the storage solutions.
