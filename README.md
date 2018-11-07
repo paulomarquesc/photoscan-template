@@ -31,7 +31,7 @@ A sample deployment script called Deploy-AzureResourceGroup.sh is provided with 
     
 2. To get end to end automation with this template, please deploy one of the storage template solutions this Photoscan template was designed for: 
    * [Avere vFXT](https://github.com/Azure/Avere/tree/master/src/vfxt#experimental-avere-vfxt-controller-and-vfxt---arm-template-deployment)
-       *  After you deployed Avere vFXT, make sure you follow the steps documented here to create NFS exports and Namespaces correctly.
+       *  After you deployed Avere vFXT, make sure you follow the steps documented [here](./docs/AverePostDeploymentSteps.md) to create NFS exports and Namespaces correctly.
     
    * [BeeGFS](https://github.com/paulomarquesc/beegfs-template).
    
