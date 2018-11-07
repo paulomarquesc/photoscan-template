@@ -1,15 +1,13 @@
 # Photoscan-template
-Sample templates and scripts that deploys [Agisoft Photoscan](http://www.agisoft.com) product in Azure. This template was designed to work with two storage solutions, one is Avere vFXT (a Microsoft product) and the other one is BeeGFS.
+Sample templates and scripts that deploys [Agisoft Photoscan](http://www.agisoft.com) product in Azure. This template was designed to work with two storage solutions, one is [Avere vFXT](http://www.averesystems.com) (a Microsoft product) and the other one is [BeeGFS](http://beegfs.io).
 
-For an end to end experience, before you deploy this template you need to deploy one of the storage solutions mentioned before, links for their deployment will be provided at the Prequisites section. The following diagrams shows a high level view of VM components deployed depending on what storage solution was chosen. 
+For an end to end experience, before you deploy this template you need to deploy one of the storage solutions mentioned before, links for their deployment will be provided at the [Prequisites](#prereq) section. The following diagrams shows a high level view of VM components deployed depending on what storage solution was chosen. 
 
 ### Avere vFXT
 ![image](./docs/media/avere.png)
 
 ### BeeGFS
 ![image](./docs/media/beegfs.png)
-
-https://github.com/Azure/Avere/tree/master/src/vfxt#experimental-avere-vfxt-controller-and-vfxt---arm-template-deployment
 
 This solution is break down into the following components:
 * Infrastructure items (Active Directory)
@@ -24,7 +22,7 @@ A sample deployment script called Deploy-AzureResourceGroup.sh is provided with 
 ./Deploy-AzureResourceGroup.sh -g myResourceGroup -l eastus -r support-rg -v keyvaultname -p azuredeploy.parameters.avere.json
 ```
 
-## Prerequisites
+## Prerequisites<a name="prereq"></a>
 1. An Azure Key Vault with the following secrets with their values created
     *  adminPassword - this will be your Domain Admin and Local Windows Administrators password
     *  activationCode - this is the Photoscan activation code, make sure you have a valid code or request a trial at their web site.
@@ -64,7 +62,7 @@ A sample deployment script called Deploy-AzureResourceGroup.sh is provided with 
     ![image](./docs/media/image5.png)
 
 
-### Cloning the source sample project
+### Cloning/Deploying the source sample project
 1. Change folder to your clouddrive so any changes gets persisted in the storage account assigned to your cloudshell
    ```bash
    cd ~/clouddrive
@@ -80,49 +78,29 @@ A sample deployment script called Deploy-AzureResourceGroup.sh is provided with 
 1. Review and change the parameters files before deploying
    *  azuredeploy.parameters.json
 
-1. Execute the deployment script the template (make sure you change command line arguments)
+1. Execute the deployment script the template (make sure you change command line arguments appropriately)
     * azuredeploy.json
         ```bash
-        ./Deploy-AzureResourceGroup.sh -g photoscan-rg -l eastus -s storageaccountname -r storage-account-rg -v mykeyvault
+        ./Deploy-AzureResourceGroup.sh -p azuredeploy.parameters.avere.json -g photoscan-rg -l eastus -s storageaccountname -r storage-account-rg -v mykeyvault
         ```
+    > Note: this example will deploy Photoscan using Avere vFXT storage, for BeeGFS, make sure you change the parameter file accordingly.
+
 
 ### Deploying Windows worker nodes instead of Linux OS
-By default the template deploys the worker nodes as Linux VMs, for an end-to-end experience, this is the option that will be able to integrate automatically to BeeGFS parallel file system storage if it was deployed using the beegfs template indicated in the pre-requisites.
-If you want to deploy Windows worker nodes, storage configuration will need to be manual because I'm not providing any storage option for this scenario, to get Windows nodes, please make sure you change the following parameters to these values before deploying this template:
+By default the template deploys the worker nodes as Linux VMs, for an end-to-end experience, this is the option that will be able to integrate automatically to Avere vFXT or BeeGFS storage if it was deployed using one of the storage templates indicated in the [prerequisites](#prereq) section.
+If you want to deploy Windows worker nodes, storage configuration will need to be manual because neither storage solutions are native to Windows at this point. To use Windows compute nodes, please make sure you change the following parameters in any of the parameter file before deploying this template:
 
-**azuredeploy.parameters.json -> useBeeGfsStorage**
+`useNfsStorage = "no"`
+`useBeeGfsStorage = "no"`
+`workerNodesType = "windows"`
 
-From
-```json
-    "useBeeGfsStorage":{
-      "value":"yes"
-    },
-```
-To
-```json
-    "useBeeGfsStorage":{
-      "value":"no"
-    },
-```
-
-**azuredeploy.parameters.json -> workerNodesType**
-
-From
-```json
-    "workerNodesType":{
-      "value": "linux"
-    },
-```
-To
-```json
-    "workerNodesType":{
-      "value": "windows"
-    },
-```
+> Note: this change can be done on both provided parameters file or in just the one you will use to perform the deployment since the first two parameters listed will make the template ignore any of the storage solutions.
 
 ### Template parameters and descriptions
 
-#### azuredeploy.parameters.json
+The following parameters are contained on both sample parameter files provided, notice that parameters that are related to Avere vFXT storage option starts with "nfs" and parameters related to BeeGFS starts with "beegfs".
+
+#### azuredeploy.parameters.X.json (where X = avere or beegfs)
 * **_artifactsLocation:** Auto-generated container in staging storage account to receive post-build staging folder upload.
 * **_artifactsLocationSasToken:** Auto-generated token to access _artifactsLocation.
 * **location:** Location where the resources of this template will be deployed to. Default Value: `eastus`
@@ -200,7 +178,11 @@ To
 * **hpcGid:** Hpc Group ID. Default Value: `7007`
 
 ## References
+Avere - http://www.averesystems.com
+
 BeeGFS - https://www.beegfs.io
+
+Avere Deployment Template - https://github.com/Azure/Avere/tree/master/src/vfxt#experimental-avere-vfxt-controller-and-vfxt---arm-template-deployment
 
 BeeGFS Deployment Template - https://github.com/paulomarquesc/beegfs-template
 
