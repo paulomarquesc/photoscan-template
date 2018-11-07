@@ -71,7 +71,7 @@
         "description": "Photoscan Activation Code."
       }
     },
-    "nodeNameSuffix": {
+    "nodeNamePrefix": {
       "type": "string",
       "defaultValue": "workernode",
       "metadata": {
@@ -167,12 +167,12 @@
           "name": "items",
           "count": "[parameters('nodeCount')]",
           "input": {
-            "name": "[concat(parameters('nodeNameSuffix'),'-',copyIndex('items',1))]",
+            "name": "[concat(parameters('nodeNamePrefix'),'-',copyIndex('items',1))]",
             "storageAccountType": "Premium_LRS",
             "osDiskSizeGB": 128,
             "subnetId": "[variables('subnetId')]",
             "vmSize": "[parameters('nodeVmSize')]",
-            "privateIpAddress": "[concat(parameters('nodeSubnetIpAddressSuffix'),'.',add(copyIndex('items',1),parameters('nodeStartIpAddress')))]",
+            "privateIpAddress": "[concat(parameters('nodeSubnetIpAddressSuffix'),'.',add(copyIndex('items',1),sub(parameters('nodeStartIpAddress'),1)))]",
             "availabilitySetId": "[resourceId('Microsoft.Compute/availabilitySets',variables('avSetInfo')[0].availabilitySetName)]",
             "imageInfo": {
               "publisher": "MicrosoftWindowsServer",

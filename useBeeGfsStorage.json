@@ -34,7 +34,7 @@
         "description": "Photoscan Vnet Resoure group name"
       }
     },
-    "nodeNameSuffix": {
+    "nodeNamePrefix": {
       "type": "string",
       "defaultValue": "workernode",
       "metadata": {
@@ -117,7 +117,7 @@
           "name": "items",
           "count": "[parameters('nodeCount')]",
           "input": {
-            "name": "[concat(parameters('nodeNameSuffix'),'-',copyIndex('items',1))]"
+            "name": "[concat(parameters('nodeNamePrefix'),'-',copyIndex('items',1))]"
           }
         }
       ]

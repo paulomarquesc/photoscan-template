@@ -83,7 +83,7 @@
     "workerNodesType": {
       "value": "linux"
     },
-    "nodeNameSuffix": {
+    "nodeNamePrefix": {
       "value": "lgpunode"
     },
     "nodeSubnetIpAddressSuffix": {

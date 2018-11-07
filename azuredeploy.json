@@ -239,7 +239,7 @@
         "description": "OS type of worker nodes, Linux or Windows."
       }
     },
-    "nodeNameSuffix": {
+    "nodeNamePrefix": {
       "type": "string",
       "defaultValue": "workernode",
       "metadata": {
@@ -952,8 +952,8 @@
           "activationCode": {
             "value": "[parameters('activationCode')]"
           },
-          "nodeNameSuffix": {
-            "value": "[parameters('nodeNameSuffix')]"
+          "nodeNamePrefix": {
+            "value": "[parameters('nodeNamePrefix')]"
           },
           "nodeRoot": {
             "value": "[parameters('nodeRoot')]"
@@ -1053,8 +1053,8 @@
           "activationCode": {
             "value": "[parameters('activationCode')]"
           },
-          "nodeNameSuffix": {
-            "value": "[parameters('nodeNameSuffix')]"
+          "nodeNamePrefix": {
+            "value": "[parameters('nodeNamePrefix')]"
           },
           "nodeRoot": {
             "value": "[parameters('nodeRoot')]"
@@ -1082,12 +1082,6 @@
           },
           "photoscanAbsolutePaths": {
             "value": "[parameters('photoscanAbsolutePaths')]"
-          },
-          "hpcUser": {
-            "value": "[parameters('hpcUser')]"
-          },
-          "hpcGroup": {
-            "value": "[parameters('hpcGroup')]"
           }
         }
       }
@@ -1118,8 +1112,8 @@
           "location": {
             "value": "[parameters('location')]"
           },
-          "nodeNameSuffix": {
-            "value": "[parameters('nodeNameSuffix')]"
+          "nodeNamePrefix": {
+            "value": "[parameters('nodeNamePrefix')]"
           },
           "nodeCount": {
             "value": "[parameters('nodeCount')]"
@@ -1186,8 +1180,8 @@
           "location": {
             "value": "[parameters('location')]"
           },
-          "nodeNameSuffix": {
-            "value": "[parameters('nodeNameSuffix')]"
+          "nodeNamePrefix": {
+            "value": "[parameters('nodeNamePrefix')]"
           },
           "nodeCount": {
             "value": "[parameters('nodeCount')]"
