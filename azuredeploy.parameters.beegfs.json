@@ -93,10 +93,10 @@
       "value": 40
     },
     "nodeCount": {
-      "value": 2  
+      "value": 5  
     },
     "nodeVmSize": {
-      "value": "Standard_NC6s_v2"
+      "value": "Standard_NC24s_v2"
     },
     "headRoot": {
       "value": "\\\\beegfs\\beegfsshare"
