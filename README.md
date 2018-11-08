@@ -160,7 +160,7 @@ The following parameters are contained on both sample parameter files provided, 
 * **nfsDnsEntry:** If useNfsStorage is set to 'yes', this parameter with correct values is mandatory. Format is <DNS A Record for NFS servers>,<IP1>,<IP2>,<IP3>,<IPx>. E.g. vfxt,10.0.0.11,10.0.0.12,10.0.0.13. Default Value: ``
 * **nfsScratchFolderNfsVersion:** NFS Version used to mount scratch (data) folder. Will be used only when NFS storage is in use. Default Value: `nfs`
 * **nfsHomeFolderNfsVersion:** NFS Version used to mount home folder for HPC User. When using BeeGFS, this value must be nfs4, if using Avere vFXT it must be nfs. Default Value: `nfs`
-* **nfsScratchMountOptions:** NFS scracth volumne mount options, comma separated, no spaces. E.g. noatime,rsize=524288,wsize=524288. Default Value: `defaults`
+* **nfsScratchMountOptions:** NFS scratch volume mount options, comma separated, no spaces. E.g. noatime,rsize=524288,wsize=524288. Default Value: `defaults`
 * **nfsExportPathUNC:** UNC NFS Export path, this value is used by Windows Scheduler (Head) to map the NFS path to a drive letter when using NFS storage. E.g. \\vfxt\!\msazure. Default Value: `\\vfxt\!\msazure`
 * **nfsMountType:** Type of NFS mounts, hard or soft. Default Value: `hard`
 * **nfsMapDriveLetter:** Drive letter where nfsExportPathUNC will be mapped to. Default Value: `z:`

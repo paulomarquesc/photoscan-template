@@ -430,7 +430,7 @@
     "nfsScratchMountOptions": {
       "type": "string",
       "metadata": {
-        "description": "NFS scracth volumne mount options, comma separated, no spaces. E.g. noatime,rsize=524288,wsize=524288."
+        "description": "NFS scratch volume mount options, comma separated, no spaces. E.g. noatime,rsize=524288,wsize=524288."
       },
       "defaultValue": "defaults"
     },
