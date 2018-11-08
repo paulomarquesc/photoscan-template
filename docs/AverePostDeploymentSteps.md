@@ -6,7 +6,7 @@ As mentioned before, home export will hold HPC User home folder, that will be sh
  
 The following steps will guide you on how to create a new export rule/policy and each export namespace on Avere vFXT Management portal.
  
-1. From a jump box or any VM, with a browser that has access to the Avere cluster, open a browser and to go https://`<your vfxt managagement ip>`. E.g. https://10.1.0.6. If you don't known this ip address, one way to obtain is following **steps 3 and 4** of [this](./docs/EstablishingSslVpn.md) document.
+1. From a jump box or any VM, with a browser that has access to the Avere cluster, open a browser and to go `https://<your vfxt managagement ip>`. E.g. `https://10.1.0.6`. If you don't known this ip address, one way to obtain is following **steps 3 and 4** of [this](./EstablishingSslVpn.md) document.
 1. Enter your Avere vFXT user name and password
 
     ![image](./media/avere-steps-1.png)
