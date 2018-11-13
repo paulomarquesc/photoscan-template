@@ -144,7 +144,7 @@ The following parameters are contained on both sample parameter files provided, 
 * **headRoot:** Root path where the projects are located for Server. Default Value: `\\beegfs\beegfsshare\Projects`
 * **nodeRoot:** Root path where the projects are located for Nodes. Default Value: `/beegfs/beegfsshare/Projects`
 * **dispatch:** Ip address of the photoscan server (head). Default Value: `10.0.1.250`
-* **gpuMask:** Decimal represention of how many GPUs will be enabled for processing. E.g. 15 means 1111, that is equal to 4 GPUs. Default Value: `15`
+* **gpuMask:** Decimal representation of how many GPUs will be enabled for processing. E.g. 15 means 1111, that is equal to 4 GPUs. Default Value: `15`
 * **windowsPhotoscanDownloadUrl:** Windows binary Photoscan download URL. Default Value: `http://download.agisoft.com/photoscan-pro_1_4_4_x64.msi`
 * **linuxPhotoscanDownloadUrl:** Photoscan Linux binaries download URL. Default Value: `http://download.agisoft.com/photoscan-pro_1_4_4_amd64.tar.gz`
 * **photoscanInstallPath:** Photoscan installation path. Default Value: `/`

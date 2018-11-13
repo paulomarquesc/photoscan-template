@@ -106,7 +106,7 @@
     "gpuMask": {
       "type": "int",
       "metadata": {
-        "description": "Decimal represention of how many GPUs will be enabled for processing. E.g. 15 means 1111, that is equal to 4 GPUs."
+        "description": "Decimal representation of how many GPUs will be enabled for processing. E.g. 15 means 1111, that is equal to 4 GPUs."
       }
     },
     "nodeVmSize": {

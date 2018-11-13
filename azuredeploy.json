@@ -299,7 +299,7 @@
       "type": "int",
       "defaultValue": 15,
       "metadata": {
-        "description": "Decimal represention of how many GPUs will be enabled for processing. E.g. 15 means 1111, that is equal to 4 GPUs."
+        "description": "Decimal representation of how many GPUs will be enabled for processing. E.g. 15 means 1111, that is equal to 4 GPUs."
       }
     },
     "windowsPhotoscanDownloadUrl": {
@@ -619,7 +619,7 @@
   },
   "resources": [
     {
-      "condition": true,
+      "condition": false,
       "comments": "Virtual network deployment",
       "name": "[concat(variables('deploymentUniqueString'),'-Networking')]",
       "type": "Microsoft.Resources/deployments",
@@ -666,7 +666,7 @@
       }
     },
     {
-      "condition": true,
+      "condition": false,
       "comments": "Active Directory Forest Deployment",
       "name": "[concat(variables('deploymentUniqueString'),'-AD')]",
       "type": "Microsoft.Resources/deployments",
@@ -752,7 +752,7 @@
       }
     },
     {
-      "condition": true,
+      "condition": false,
       "comments": "Jumpbox Deployment",
       "name": "[concat(variables('deploymentUniqueString'),'-Jumpbox')]",
       "type": "Microsoft.Resources/deployments",
@@ -829,7 +829,7 @@
       }
     },
     {
-      "condition": true,
+      "condition": false,
       "comments": "Windows Photoscan Head Deployment",
       "name": "[concat(variables('deploymentUniqueString'),'-Head')]",
       "type": "Microsoft.Resources/deployments",
