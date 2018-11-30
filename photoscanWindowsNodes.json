@@ -299,7 +299,7 @@
       }
     },
     {
-      "condition": false,
+      "condition": true,
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('nodesVMsList').items[copyIndex()].name,'/NvidiaGpuDriverWindows')]",
       "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
