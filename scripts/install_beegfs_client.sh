@@ -218,7 +218,7 @@ systemctl disable firewalld
 
 # Disable SELinux
 sed -i 's/SELINUX=.*/SELINUX=disabled/g' /etc/selinux/config
-setenforce 0
+setenforce 0 || true
 
 # Disable tty requirement for sudo
 sed -i 's/^Defaults[ ]*requiretty/# Defaults requiretty/g' /etc/sudoers
