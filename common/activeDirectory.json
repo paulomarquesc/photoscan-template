@@ -132,6 +132,17 @@
             },
             "defaultValue": "AD-SN"
         },
+        "useBeeGfsStorage": {
+            "type": "string",
+            "metadata": {
+              "description": "Should this template use BeeGfs storage. If this parameter is set to 'yes', make sure useNfsStorage is set to 'no'"
+            },
+            "allowedValues": [
+              "yes",
+              "no"
+            ],
+            "defaultValue": "yes"
+          },
         "useNfsStorage": {
             "type": "string",
             "metadata": {
@@ -519,7 +530,7 @@
             }
         },
         {
-            "condition": true,
+            "condition": "[or(equals(parameters('useBeeGfsStorage'),'yes'),equals(parameters('useNfsStorage'),'yes'))]",
             "comments": "DC1 final configurations",
             "type": "Microsoft.Compute/virtualMachines/extensions",
             "name": "[concat(variables('adVMsList')[0].name,'/CustomScript')]",
