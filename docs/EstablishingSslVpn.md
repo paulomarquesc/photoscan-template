@@ -4,7 +4,7 @@ This procedure shows a quick way to estabilsh a SSH tunnel between a Linux compu
 
 
 1. Make sure that you have access to the SSH Private key related to the SSH Public key used to run the Avere vFXT deployment template.
-2. Sign on to Azure Portal (https://porta.azure.com)
+2. Sign on to Azure Portal (https://portal.azure.com)
 3. Obtain the Avere vFXT management ip address by clicking "Resource Groups" in your left-hand side, selecting the resource group where you just deployed your Avere vFXT cluster, clicking "Deployments" then "Microsoft.Template" deployment.
 ![image](./media/ssh-tunnel-0.png)
 4. When Microsoft.Template's "Deployment" blade appears, click "Outputs" and take note of the MGMT_IP field ip address. This ip address will be used in the ssh command line we will execute in a later step
