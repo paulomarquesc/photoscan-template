@@ -78,6 +78,17 @@
         "description": "Folder path where Shared Storage volume will be mounted on Linux VMs."
       }
     },
+    "workerNodesType": {
+      "type": "string",
+      "defaultValue": "linux",
+      "allowedValues": [
+        "linux",
+        "windows"
+      ],
+      "metadata": {
+        "description": "OS type of worker nodes, Linux or Windows."
+      }
+    },
     "nfsScratchExportPath": {
       "type": "string",
       "metadata": {
@@ -184,16 +195,14 @@
       "metadata": {
         "description": "Windows NFS Client read size in KB."
       },
-      "defaultValue": 64,
-      "maxValue": 64
+      "defaultValue": 512
     },
     "nfsWindowsWsizeKb":{
       "type": "int",
       "metadata": {
         "description": "Windows NFS Client write size in KB."
       },
-      "defaultValue": 64,
-      "maxValue": 64
+      "defaultValue": 512
     },
     "nfsDnsEntry": {
       "type": "string",
@@ -337,10 +346,40 @@
       }
     },
     {
-      "condition": true,
-      "comments": "CustomScript extension execution NFS client on photoscan Linux Nodes",
+      "condition":  "[equals(parameters('workerNodesType'),'windows')]",
+      "comments": "CustomScript extension execution to configure Photoscan Nodes with NFS",
       "type": "Microsoft.Compute/virtualMachines/extensions",
       "name": "[concat(variables('nodeVMsList').items[copyIndex()].name,'/CustomScript')]",
+      "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[concat(variables('deploymentUniqueString'),'-Peering2-PeeringDeployment')]",
+        "[concat(variables('deploymentUniqueString'),'-Peering1-PeeringDeployment')]"
+      ],
+      "copy": {
+        "name": "vmWindowsCustomScriptCopy",
+        "count": "[length(variables('nodeVMsList').items)]"
+      },
+      "properties": {
+        "publisher": "Microsoft.Compute",
+        "type": "CustomScriptExtension",
+        "typeHandlerVersion": "1.9",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[concat(parameters('_artifactsLocation'),'/scripts/install_nfs_based_storage_config.ps1', parameters('_artifactsLocationSasToken'))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File ./scripts/install_nfs_based_storage_config.ps1',' ', variables('installParams'))]"
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('workerNodesType'),'linux')]",
+      "comments": "CustomScript extension execution NFS client on photoscan Linux Nodes",
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "name": "[concat(variables('nodeVMsList').items[copyIndex()].name,'/LinuxCustomScript')]",
       "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
       "location": "[parameters('location')]",
       "dependsOn": [

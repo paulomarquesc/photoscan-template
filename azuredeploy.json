@@ -493,16 +493,14 @@
       "metadata": {
         "description": "Windows NFS Client read size in KB."
       },
-      "defaultValue": 64,
-      "maxValue": 64
+      "defaultValue": 512
     },
     "nfsWindowsWsizeKb": {
       "type": "int",
       "metadata": {
         "description": "Windows NFS Client write size in KB."
       },
-      "defaultValue": 64,
-      "maxValue": 64
+      "defaultValue": 512
     },
     "beeGfsMasterName": {
       "type": "string",
@@ -619,7 +617,7 @@
   },
   "resources": [
     {
-      "condition": true,
+      "condition": false,
       "comments": "Virtual network deployment",
       "name": "[concat(variables('deploymentUniqueString'),'-Networking')]",
       "type": "Microsoft.Resources/deployments",
@@ -666,7 +664,7 @@
       }
     },
     {
-      "condition": true,
+      "condition": false,
       "comments": "Active Directory Forest Deployment",
       "name": "[concat(variables('deploymentUniqueString'),'-AD')]",
       "type": "Microsoft.Resources/deployments",
@@ -755,7 +753,7 @@
       }
     },
     {
-      "condition": true,
+      "condition": false,
       "comments": "Jumpbox Deployment",
       "name": "[concat(variables('deploymentUniqueString'),'-Jumpbox')]",
       "type": "Microsoft.Resources/deployments",
@@ -1158,7 +1156,7 @@
       }
     },
     {
-      "condition": "[and(equals(parameters('useNfsStorage'),'yes'), and(equals(parameters('workerNodesType'),'linux'),equals(parameters('useBeeGfsStorage'),'no')))]",
+      "condition": "[and(equals(parameters('useNfsStorage'),'yes'), equals(parameters('useBeeGfsStorage'),'no'))]",
       "comments": "Configure Linux Nodes to use NFS",
       "name": "[concat(variables('deploymentUniqueString'),'-nodes-attach-NFS')]",
       "type": "Microsoft.Resources/deployments",
@@ -1218,6 +1216,9 @@
           },
           "homeNfsExportPath": {
             "value": "[parameters('homeNfsExportPath')]"
+          },
+          "workerNodesType":{
+            "value": "[parameters('workerNodesType')]"
           },
           "nfsMapDriveLetter": {
             "value":"[parameters('nfsMapDriveLetter')]"

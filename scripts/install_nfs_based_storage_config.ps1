@@ -28,10 +28,10 @@ param
     [int]$DefaultAccessMode=777,
 
     [Parameter(Mandatory=$false)]
-    [int]$RSizeKB=64, # Windows max out at 64KB
+    [int]$RSizeKB=512, # Windows max out at 1024KB - with Avere vFXT it max out at 512
 
     [Parameter(Mandatory=$false)]
-    [int]$WSizeKB=64 # Windows max out at 64KB
+    [int]$WSizeKB=512 # Windows max out at 1024KB - with Avere vFXT it max out at 512
 )
 
 $ErrorActionPreference="Stop"
@@ -52,6 +52,17 @@ function ConfigureMountScriptRun
 
     # Current user
     Invoke-Expression "reg add ""hkcu\Software\Microsoft\Windows\CurrentVersion\Run"" /v MountNfs /d $MountScriptNameFullName /t REG_SZ /f"
+
+    # Schedule task to execute mount as system as well if this is a node
+
+    $PhotoscanProcessName = "photoscan.exe"
+    $PhotoscanProcess = Get-WmiObject Win32_Process -Filter "name = '$PhotoscanProcessName'" | Select-Object CommandLine
+
+    if ($PhotoscanProcess -ne $null -and $PhotoscanProcess.CommandLine.contains("--node"))
+    {
+        schtasks /create /tn "mount_nfs" /tr "C:\MountScript\mountnfs.bat" /sc onstart /RU SYSTEM /RL HIGHEST
+        schtasks /run /tn "mount_nfs"
+    }
 }
 
 function InstallNfsClient
@@ -77,6 +88,8 @@ function ConfigureNfsClient
     }
 
     "mount -o anon nolock casesensitive=$(@{$true = "yes"; $false = "no"}[$BlnCaseSensitiveLookup -eq $true]) timeout=$timeout mtype=$MountType rsize=$RSizeKB wsize=$WSizeKB $drive $NfsExportPathUNC" | out-file $MountScriptNameFullName -Encoding ascii
+    "mount > c:\mountscript\%username%-mount.txt" | out-file $MountScriptNameFullName -Encoding ascii -Append
+    "reg query `"hkcu\SOFTWARE\Agisoft\PhotoScan Pro\main\network`" > c:\mountscript\%username%-hkcu.txt" | out-file $MountScriptNameFullName -Encoding ascii -Append
 }
 
 function ModifyDefaultPhotoscanRegKey

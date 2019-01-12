@@ -76,7 +76,7 @@ function ConfigurePhotoscan
     else
     {
         & cmd /c "sc" "create" "PhotoScanClient" "binpath=" "C:\Program Files\Agisoft\PhotoScan Pro\photoscan --service run --node --dispatch $Dispatch --root $Root --gpu_mask $GpuMask --absolute_paths $AbsolutePaths" "start=" "delayed-auto" "DisplayName=" "Agisoft Photoscan Pro Node"
-        #New-NetFirewallRule -DisplayName 'PhotoscanServerPort' -Profile @('Domain', 'Private') -Direction Inbound -Action Allow -Protocol TCP -LocalPort @($ClientCommPort)
+        New-NetFirewallRule -DisplayName 'PhotoscanServerPort' -Profile @('Domain', 'Private') -Direction Inbound -Action Allow -Protocol TCP -LocalPort @($ClientCommPort)
         Start-Service PhotoScanClient
     }
 }

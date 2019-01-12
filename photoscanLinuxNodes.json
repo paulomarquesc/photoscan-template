@@ -353,7 +353,7 @@
       "condition": true,
       "comments": "CustomScript extension execution to setup photoscan on GPU Nodes",
       "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('nodesVMsList').items[copyIndex()].name,'/CustomScript')]",
+      "name": "[concat(variables('nodesVMsList').items[copyIndex()].name,'/LinuxCustomScript')]",
       "apiVersion": "[parameters('deploymentConfig').apiVersions.vmExtensionApiVersion]",
       "location": "[parameters('location')]",
       "dependsOn": [

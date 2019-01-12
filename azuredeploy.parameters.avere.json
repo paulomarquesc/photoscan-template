@@ -3,10 +3,10 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "adminUsername": {
-      "value": ""
+      "value": "pmcadmin"
     },
     "sshKeyData": {
-      "value": ""
+      "value": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCqwHQ2PbXWzqDXZ7jr3Llh9ULS2UCMDNYwh6xMwi2sKlXlMLFTy+gp+HrFuiOrgz20k/TyybQ8djT+LQ1i35sBOJFs1hPAJYy/KEhvggCi/w13G9lxAY44YiUAy9ZgEQ8+L6CKhRA0QiLxM5Q3wNhGg+EnpZDTkk4Sfpy/4vNTaujVpVeCST3U/H9jl3LjwKR17HFOmScvF6jEdIm2gATIWgeyV4ysSeRop1k8Dd7EqYw3svsseY404O2a1EkICGaS/GkwYtW+J+lwbiXmaCyhzhOJHoFOwozSr2MwkbSDsj3vKkzfTmhkrYq3DuE1E4iFl0Hc81AWerhAl738d6h7SFcnuaj7Yv4K+jN0jqONTbvgHP8+e+QY27ANdeeVxyBnmWL6On55Awb2x+1nkeV5CG2gRBB+0tXh5FbWhDhrUmvzxbuplopshOv5PSN2JPSGbznEUeKNSIpRrZeLfpcZ89daiorsRq14pfzPlONqh9HlZpDuI7Amy1F9awW3jsGqR0SEJfJf1+xUpFju85HphpQzbiwpuDn3CS499h076EbeMc1S5JjzEk7B+KHPgWqJ4xs+ZYESaxW6YukPY5kuvS5KlWOtVp7EqI+/E8Hph2sJ8N7BsNEFdyH6ebeBPT03k49VX3Q/1tyXZoJftPPmFbwyV/LbAqX3sEp0bfs2tw== pmcadmin@pmarques-pc01"
     },
     "vnetName": {
       "value": "photoscan-vnet"
@@ -81,10 +81,10 @@
       "value": "Standard_D8S_v3"
     },
     "workerNodesType": {
-      "value": "linux"
+      "value": "windows"
     },
     "nodeNamePrefix": {
-      "value": "lgpunode"
+      "value": "wgpunode"
     },
     "nodeSubnetIpAddressSuffix": {
       "value": "10.0.1"
@@ -99,7 +99,7 @@
       "value": "Standard_NC24s_v2"
     },
     "headRoot": {
-      "value": "//vfxt/!/data"
+      "value": "//vfxt/data"
     },
     "nodeRoot": {
       "value": "/mnt/vfxt-data"
@@ -129,10 +129,10 @@
       "value": "no"
     },
      "storageVnetRG": {
-      "value": "avere-eus"
+      "value": "avere-eus-01-ep"
     },
     "storageVnetName": {
-      "value": "avere-eus-vnet"
+      "value": "avere-vnet-ep"
     },
     "sharedNfsStorageHpcUserHomeFolder": {
       "value": "/mnt/vfxt-home"
@@ -159,7 +159,7 @@
       "value":"noatime"
     },
     "nfsExportPathUNC":{
-      "value": "\\\\vfxt\\!\\data"
+      "value": "\\\\vfxt\\data"
     },
     "nfsMapDriveLetter":{
       "value":"z:"
